@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "639479435926",
+    "project_id": "flip-66d56",
+    "storage_bucket": "flip-66d56.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639479435926:android:a3fa04adf461b570ec68b7",
+        "android_client_info": {
+          "package_name": "com.example.flip"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5tAsIjQRa35tvMqdhyOEBO-pZoRxC5Mg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
