@@ -7,6 +7,7 @@ import 'package:flip/features/home/screens/home_page.dart';
 import 'package:flip/features/team/screens/team_page.dart';
 import 'package:flip/features/more/screens/more_page.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flip/features/more/screens/login_page.dart';
 
 void main() {
   initializeDateFormatting('vi_VN', null).then((_) {
@@ -32,7 +33,7 @@ class MyApp extends StatelessWidget {
         ),
         fontFamily: 'Roboto',
       ),
-      home: const MainScreen(),
+      home: const LoginScreen(),
     );
   }
 }
