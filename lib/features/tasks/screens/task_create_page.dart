@@ -3,6 +3,7 @@ import 'package:flip/features/tasks/widgets/task_create/color_card.dart';
 import 'package:flip/features/tasks/widgets/task_create/schedule_card.dart';
 import 'package:flip/features/tasks/widgets/task_create/title_card.dart';
 import 'package:flip/features/tasks/widgets/task_create/repeat_dialog.dart';
+import 'package:flip/features/tasks/widgets/task_create/group_card.dart';
 import 'package:flip/theme/app_colors.dart';
 
 class TaskCreatePage extends StatefulWidget {
@@ -44,6 +45,10 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
 
   String? _repeatText;
   DateTime? _repeatEndDate;
+
+  String _selectedGroup = 'Nhóm';
+
+  final List<String> _groups = const ['Nhóm', 'Work', 'Personal', 'Shopping'];
 
   @override
   void dispose() {
@@ -110,6 +115,13 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
                 onRemoveRepeat: () => setState(() => _repeatText = null),
                 onRemoveRepeatEndDate: () =>
                     setState(() => _repeatEndDate = null),
+              ),
+              const SizedBox(height: 14),
+              GroupCard(
+                selectedGroup: _selectedGroup,
+                onGroupChanged: (value) =>
+                    setState(() => _selectedGroup = value),
+                groups: _groups,
               ),
               const SizedBox(height: 14),
               ColorCard(
