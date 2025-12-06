@@ -32,8 +32,10 @@ class TaskTableCalendar extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final rowCount = format == CalendarFormat.month ? 6 : 2;
+          // Số hàng: 5 hàng cho month view (thay vì 6)
+          final rowCount = format == CalendarFormat.month ? 5 : 2;
           final daysOfWeekHeight = 40.0;
+          // Tính chiều cao còn lại để chia đều cho các ô
           final availableHeight = constraints.maxHeight - daysOfWeekHeight;
           final cellHeight = availableHeight / rowCount;
 
@@ -75,6 +77,10 @@ class TaskTableCalendar extends StatelessWidget {
                 outsideDaysVisible: true,
                 cellMargin: EdgeInsets.zero,
                 cellPadding: EdgeInsets.zero,
+                // Tắt marker mặc định (cục đen đen)
+                markerDecoration: const BoxDecoration(
+                  color: Colors.transparent,
+                ),
               ),
               daysOfWeekStyle: DaysOfWeekStyle(
                 weekdayStyle: TextStyle(
