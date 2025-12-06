@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:flip/features/tasks/widgets/calendar_view_mode.dart';
+import 'package:flip/features/tasks/widgets/task_list/calendar/calendar_view_mode.dart';
 import 'package:flip/theme/app_colors.dart';
 
 class CalendarHeader extends StatelessWidget {

@@ -1,6 +1,6 @@
 import 'package:flip/features/tasks/models/task_item.dart';
 import 'package:flip/features/tasks/screens/task_calendar_page.dart';
-import 'package:flip/features/tasks/widgets/task_detail_modal.dart';
+import 'package:flip/features/tasks/widgets/task_list/task_detail_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flip/theme/app_colors.dart';
 
@@ -14,7 +14,7 @@ class TaskListPage extends StatefulWidget {
 }
 
 class _TaskListPageState extends State<TaskListPage> {
-  TaskViewType _viewType = TaskViewType.calendar;
+  TaskViewType _viewType = TaskViewType.list;
 
   final List<TaskItem> _tasks = [
     TaskItem(

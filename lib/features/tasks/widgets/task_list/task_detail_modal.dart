@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:flip/features/tasks/models/task_item.dart';
 import 'package:flip/theme/app_colors.dart';
 
+enum _TaskMenuAction { complete, edit, delete }
+
 class TaskDetailModal extends StatefulWidget {
   final TaskItem task;
 
@@ -49,6 +51,71 @@ class _TaskDetailModalState extends State<TaskDetailModal>
     final date = DateFormat('EEE, dd MMM yyyy', 'vi_VN').format(dt);
     final time = DateFormat('HH:mm').format(dt);
     return '$date · $time';
+  }
+
+  void _onMenuSelected(BuildContext context, _TaskMenuAction action) {
+    // TODO: hook up real handlers for: complete, edit, delete
+    final label = switch (action) {
+      _TaskMenuAction.complete => 'Hoàn thành nhiệm vụ này',
+      _TaskMenuAction.edit => 'Chỉnh sửa',
+      _TaskMenuAction.delete => 'Xóa',
+    };
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(label)));
+  }
+
+  void _showPopoverMenu(BuildContext buttonContext) {
+    final RenderBox button = buttonContext.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Overlay.of(buttonContext).context.findRenderObject() as RenderBox;
+    final buttonRect =
+        button.localToGlobal(Offset.zero, ancestor: overlay) & button.size;
+
+    final position = RelativeRect.fromLTRB(
+      buttonRect.left,
+      buttonRect.bottom + 4,
+      overlay.size.width - buttonRect.left - buttonRect.width,
+      overlay.size.height - buttonRect.bottom,
+    );
+
+    showMenu<_TaskMenuAction>(
+      context: buttonContext,
+      position: position,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      constraints: const BoxConstraints(minWidth: 0),
+      items: [
+        const PopupMenuItem(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          value: _TaskMenuAction.complete,
+          child: Text('Hoàn thành nhiệm vụ'),
+        ),
+        const PopupMenuItem(
+          enabled: false,
+          height: 1,
+          padding: EdgeInsets.zero,
+          child: Divider(height: 1, thickness: 1, color: Color(0xFFD0C4B5)),
+        ),
+        const PopupMenuItem(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          value: _TaskMenuAction.edit,
+          child: Text('Chỉnh sửa'),
+        ),
+        const PopupMenuItem(
+          enabled: false,
+          height: 1,
+          padding: EdgeInsets.zero,
+          child: Divider(height: 1, thickness: 1, color: Color(0xFFD0C4B5)),
+        ),
+        const PopupMenuItem(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          value: _TaskMenuAction.delete,
+          child: Text('Xóa', style: TextStyle(color: Colors.red)),
+        ),
+      ],
+    ).then((value) {
+      if (value != null) _onMenuSelected(buttonContext, value);
+    });
   }
 
   String _priorityText(int p) {
@@ -145,14 +212,29 @@ class _TaskDetailModalState extends State<TaskDetailModal>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Tiêu đề công việc
-                      Text(
-                        widget.task.title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              widget.task.title,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Builder(
+                            builder: (btnCtx) => IconButton(
+                              tooltip: 'Tùy chọn',
+                              icon: const Icon(
+                                Icons.more_horiz,
+                                color: AppColors.xanhLa1,
+                              ),
+                              onPressed: () => _showPopoverMenu(btnCtx),
+                            ),
+                          ),
+                        ],
                       ),
 
                       const SizedBox(height: 16),
@@ -257,7 +339,7 @@ class _TaskDetailModalState extends State<TaskDetailModal>
                             : 'Chưa xác định',
                       ),
 
-                      // Trạng thái cá nhân
+                      // Trạng thái
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -294,7 +376,7 @@ class _TaskDetailModalState extends State<TaskDetailModal>
                             const SizedBox(width: 12),
                             Expanded(
                               child: const Text(
-                                'Trạng thái cá nhân',
+                                'Trạng thái',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
@@ -302,16 +384,6 @@ class _TaskDetailModalState extends State<TaskDetailModal>
                                 ),
                               ),
                             ),
-                            Icon(
-                              widget.task.isDone
-                                  ? Icons.check_circle_rounded
-                                  : Icons.radio_button_unchecked_rounded,
-                              size: 20,
-                              color: widget.task.isDone
-                                  ? AppColors.xanhLa2
-                                  : Colors.grey,
-                            ),
-                            const SizedBox(width: 8),
                             Text(
                               widget.task.isDone
                                   ? 'Đã hoàn thành'

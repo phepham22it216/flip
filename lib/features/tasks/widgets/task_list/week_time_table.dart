@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/widgets/task_list/task_detail_modal.dart';
 
 class WeekTimeTable extends StatelessWidget {
   final DateTime weekStart;
@@ -116,17 +117,32 @@ class WeekTimeTable extends StatelessWidget {
                               children: [
                                 for (final task in cellTasks)
                                   Positioned.fill(
-                                    child: Container(
-                                      margin: const EdgeInsets.all(2),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          task.title,
-                                          style: const TextStyle(fontSize: 11),
-                                          textAlign: TextAlign.center,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (ctx) =>
+                                              TaskDetailModal(task: task),
+                                        );
+                                      },
+                                      child: Container(
+                                        margin: const EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            task.title,
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
                                         ),
                                       ),
                                     ),

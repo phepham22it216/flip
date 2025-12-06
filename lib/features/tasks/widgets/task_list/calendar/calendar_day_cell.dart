@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/widgets/task_list/task_detail_modal.dart';
 import 'package:flip/theme/app_colors.dart';
 
 class CalendarDayCell extends StatelessWidget {
@@ -100,21 +101,31 @@ class _TaskPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor = isOutside ? Colors.grey.shade500 : Colors.white;
-    return Container(
-      margin: const EdgeInsets.only(top: 2),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: task.color,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        task.title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (ctx) => TaskDetailModal(task: task),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(top: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: task.color,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          task.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

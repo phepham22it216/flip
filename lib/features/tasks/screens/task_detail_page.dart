@@ -3,11 +3,16 @@ import 'package:intl/intl.dart';
 
 import 'package:flip/features/tasks/models/task_item.dart';
 import 'package:flip/theme/app_colors.dart';
+import 'package:flip/features/tasks/widgets/task_detail/detail_tile.dart';
+import 'package:flip/features/tasks/widgets/task_detail/time_range_card.dart';
+import 'package:flip/features/tasks/widgets/task_detail/task_helpers.dart';
+
+enum _TaskMenuAction { complete, edit, delete }
 
 class TaskDetailPage extends StatelessWidget {
   final TaskItem task;
 
-  const TaskDetailPage({Key? key, required this.task}) : super(key: key);
+  const TaskDetailPage({super.key, required this.task});
 
   String _formatDateTime(DateTime dt) {
     final date = DateFormat('EEE, dd MMM yyyy', 'vi_VN').format(dt);
@@ -15,56 +20,56 @@ class TaskDetailPage extends StatelessWidget {
     return '$date  ·  $time';
   }
 
-  String _priorityText(int p) {
-    switch (p) {
-      case 1:
-        return 'Thấp';
-      case 2:
-        return 'Trung bình';
-      case 3:
-        return 'Cao';
-      default:
-        return 'Không xác định';
-    }
+  void _onMenuSelected(BuildContext context, _TaskMenuAction action) {
+    final label = switch (action) {
+      _TaskMenuAction.complete => 'Hoàn thành nhiệm vụ này',
+      _TaskMenuAction.edit => 'Chỉnh sửa',
+      _TaskMenuAction.delete => 'Xóa',
+    };
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(label)));
   }
 
-  Color _priorityColor(int p) {
-    switch (p) {
-      case 1:
-        return AppColors.xanh2;
-      case 2:
-        return AppColors.vang;
-      case 3:
-        return AppColors.doSoft;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _difficultyText(int d) {
-    switch (d) {
-      case 1:
-        return 'Dễ';
-      case 2:
-        return 'Trung bình';
-      case 3:
-        return 'Khó';
-      default:
-        return 'Không xác định';
-    }
-  }
-
-  Color _difficultyColor(int d) {
-    switch (d) {
-      case 1:
-        return AppColors.xanhLa1;
-      case 2:
-        return AppColors.vang;
-      case 3:
-        return AppColors.doSoft;
-      default:
-        return Colors.grey;
-    }
+  void _showActionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ActionRow(
+                label: 'Hoàn thành nhiệm vụ này',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _onMenuSelected(context, _TaskMenuAction.complete);
+                },
+              ),
+              const Divider(height: 1),
+              _ActionRow(
+                label: 'Chỉnh sửa',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _onMenuSelected(context, _TaskMenuAction.edit);
+                },
+              ),
+              const Divider(height: 1),
+              _ActionRow(
+                label: 'Xóa',
+                isDestructive: true,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _onMenuSelected(context, _TaskMenuAction.delete);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -77,6 +82,7 @@ class TaskDetailPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        leadingWidth: 110,
         title: Text(
           task.title,
           style: const TextStyle(
@@ -86,12 +92,25 @@ class TaskDetailPage extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_rounded,
-            color: AppColors.textPrimary,
-          ),
-          onPressed: () => Navigator.pop(context),
+        leading: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(
+                Icons.arrow_back_ios_rounded,
+                color: AppColors.textPrimary,
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+            IconButton(
+              tooltip: 'Tùy chọn',
+              icon: const Icon(
+                Icons.more_horiz_rounded,
+                color: AppColors.xanhLa1,
+              ),
+              onPressed: () => _showActionSheet(context),
+            ),
+          ],
         ),
       ),
       body: SingleChildScrollView(
@@ -100,102 +119,28 @@ class TaskDetailPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Card thời gian
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                    color: Colors.black.withOpacity(0.08),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Bắt đầu',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          start,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 16,
-                      color: AppColors.xanhLa2,
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        const Text(
-                          'Kết thúc',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          end,
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            TimeRangeCard(startTime: start, endTime: end),
 
             const SizedBox(height: 24),
 
             // Mức độ quan trọng
-            _DetailTile(
+            DetailTile(
               icon: Icons.flag_rounded,
-              iconColor: _priorityColor(task.priority),
+              iconColor: TaskHelpers.priorityColor(task.priority),
               title: 'Mức độ quan trọng',
-              value: _priorityText(task.priority),
+              value: TaskHelpers.priorityText(task.priority),
             ),
 
             // Độ khó
-            _DetailTile(
+            DetailTile(
               icon: Icons.flash_on_rounded,
-              iconColor: _difficultyColor(task.difficulty),
+              iconColor: TaskHelpers.difficultyColor(task.difficulty),
               title: 'Độ khó',
-              value: _difficultyText(task.difficulty),
+              value: TaskHelpers.difficultyText(task.difficulty),
             ),
 
             // Nhóm
-            _DetailTile(
+            DetailTile(
               icon: Icons.group_rounded,
               iconColor: AppColors.xanh1,
               title: 'Nhóm',
@@ -204,30 +149,18 @@ class TaskDetailPage extends StatelessWidget {
                   : 'Chưa xác định',
             ),
 
-            // Trạng thái cá nhân
-            _DetailTile(
+            // Trạng thái
+            DetailTile(
               icon: Icons.person_rounded,
               iconColor: task.isDone ? AppColors.xanhLa2 : AppColors.doSoft,
-              title: 'Trạng thái cá nhân',
-              valueWidget: Row(
-                children: [
-                  Icon(
-                    task.isDone
-                        ? Icons.check_circle_rounded
-                        : Icons.radio_button_unchecked_rounded,
-                    size: 20,
-                    color: task.isDone ? AppColors.xanhLa2 : Colors.grey,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    task.isDone ? 'Đã hoàn thành' : 'Chưa hoàn thành',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: task.isDone ? AppColors.xanhLa2 : Colors.grey[700],
-                    ),
-                  ),
-                ],
+              title: 'Trạng thái',
+              valueWidget: Text(
+                task.isDone ? 'Đã hoàn thành' : 'Chưa xong',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: task.isDone ? AppColors.xanhLa2 : Colors.grey[700],
+                ),
               ),
             ),
 
@@ -273,70 +206,32 @@ class TaskDetailPage extends StatelessWidget {
   }
 }
 
-class _DetailTile extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String? value;
-  final Widget? valueWidget;
+class _ActionRow extends StatelessWidget {
+  final String label;
+  final bool isDestructive;
+  final VoidCallback onTap;
 
-  const _DetailTile({
-    Key? key,
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    this.value,
-    this.valueWidget,
-  }) : super(key: key);
+  const _ActionRow({
+    required this.label,
+    required this.onTap,
+    this.isDestructive = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-            color: Colors.black.withOpacity(0.06),
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: isDestructive ? Colors.red : AppColors.textPrimary,
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 20, color: iconColor),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          valueWidget ??
-              Text(
-                value ?? '',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey,
-                ),
-              ),
-        ],
+        ),
       ),
     );
   }

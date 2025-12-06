@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:flip/features/tasks/models/task_item.dart';
-import 'package:flip/features/tasks/widgets/calendar_day_cell.dart';
+import 'package:flip/features/tasks/widgets/task_list/calendar/calendar_day_cell.dart';
 import 'package:flip/theme/app_colors.dart';
 
 class TaskTableCalendar extends StatelessWidget {
@@ -17,7 +17,7 @@ class TaskTableCalendar extends StatelessWidget {
     required this.focusedDay,
     required this.selectedDay,
     required this.format,
-    required this.getTasksForDay,
+    required this.getTasksForDay, 
     required this.onFocusedDayChanged,
     required this.onDaySelected,
   });

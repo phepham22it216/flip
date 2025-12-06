@@ -4,11 +4,11 @@ import 'package:table_calendar/table_calendar.dart';
 
 import 'package:flip/theme/app_colors.dart';
 import 'package:flip/features/tasks/models/task_item.dart';
-import 'package:flip/features/tasks/widgets/calendar_header.dart';
-import 'package:flip/features/tasks/widgets/calendar_view_mode.dart';
-import 'package:flip/features/tasks/widgets/task_day_timeline.dart';
-import 'package:flip/features/tasks/widgets/task_table_calendar.dart';
-import 'package:flip/features/tasks/widgets/week_time_table.dart';
+import 'package:flip/features/tasks/widgets/task_list/calendar/calendar_header.dart';
+import 'package:flip/features/tasks/widgets/task_list/calendar/calendar_view_mode.dart';
+import 'package:flip/features/tasks/widgets/task_list/task_day_timeline.dart';
+import 'package:flip/features/tasks/widgets/task_list/calendar/task_table_calendar.dart';
+import 'package:flip/features/tasks/widgets/task_list/week_time_table.dart';
 
 class TaskCalendarPage extends StatefulWidget {
   final List<TaskItem> tasks;
