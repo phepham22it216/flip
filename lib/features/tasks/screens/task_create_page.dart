@@ -272,7 +272,7 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
                       ),
                     ),
                     const Text(
-                      'Select Reminder At',
+                      'Thời gian nhắc nhở',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

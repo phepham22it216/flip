@@ -1,5 +1,6 @@
 import 'package:flip/features/tasks/models/task_item.dart';
 import 'package:flip/features/tasks/screens/task_calendar_page.dart';
+import 'package:flip/features/tasks/screens/task_edit_page.dart';
 import 'package:flip/features/tasks/widgets/task_list/task_detail_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flip/theme/app_colors.dart';
@@ -30,6 +31,11 @@ class _TaskListPageState extends State<TaskListPage> {
       difficulty: 1,
       isDone: false,
       groupName: 'Học tập',
+      reminders: ['5 phút trước'],
+      reminderEnabled: true,
+      repeatText: 'Mỗi 4 Thứ Bảy',
+      repeatEndDate: DateTime(2025, 3, 31),
+      pinned: true,
     ),
     TaskItem(
       id: '2',
@@ -335,7 +341,13 @@ class _TaskListPageState extends State<TaskListPage> {
                     text: 'Sửa',
                     onTap: () {
                       Navigator.pop(ctx);
-                      // TODO: điều hướng sang trang edit task
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              TaskEditPage(task: _tasks[index]),
+                        ),
+                      );
                     },
                   ),
                   const Divider(height: 1),
