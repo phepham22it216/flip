@@ -3,12 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flip/features/more/screens/signup_page.dart';
 import '../../../main.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+class _LoginScreenState extends State<LoginScreen> {
   // Controllers  ----------------------------------------------------- //
   final TextEditingController emailController = TextEditingController();     // <-- added
   final TextEditingController passController = TextEditingController();      // <-- added
+
+  // Password visibility
+  bool _obscurePassword = true;
 
   // Helper: show message --------------------------------------------- //
   void showMsg(BuildContext context, String text) {                        // <-- added
@@ -93,11 +100,21 @@ class LoginScreen extends StatelessWidget {
                         // Password
                         TextField(
                           controller: passController,
-                          obscureText: true,
+                          obscureText: _obscurePassword,
                           decoration: InputDecoration(
                             labelText: "Enter your password",
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
                             ),
                           ),
                         ),
@@ -139,10 +156,15 @@ class LoginScreen extends StatelessWidget {
                               }
 
                               try {
-                                await AuthService().loginWithEmail(
+                                final user = await AuthService().loginWithEmail(
                                   email: email,
                                   password: pass,
                                 );
+
+                                if (user == null) {
+                                  showMsg(context, "Login failed. Please check your credentials.");
+                                  return; // Không chuyển hướng
+                                }
 
                                 Navigator.pushReplacement(
                                   context,
@@ -190,7 +212,17 @@ class LoginScreen extends StatelessWidget {
                             ),
                             onPressed: () async {
                               try {
-                                await AuthService().loginWithGoogle();
+                                final user = await AuthService().loginWithGoogle();
+
+                                if (user == null) {
+                                  // Đăng nhập thất bại
+                                  showMsg(context, "Google Sign-In failed. Please try again.");
+                                  return; // Không chuyển hướng
+                                }
+
+                                print("✅ Logged in user:");
+                                print("Name: ${user.fullName}");
+                                print("Email: ${user.email}");
 
                                 Navigator.pushReplacement(
                                   context,

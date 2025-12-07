@@ -4,14 +4,23 @@ import 'package:flip/features/more/screens/login_page.dart';
 import '../services/auth_service.dart';
 
 // SIGNUP SCREEN
-class SignupScreen extends StatelessWidget {
-  SignupScreen({super.key});
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
 
+  @override
+  State<SignupScreen> createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends State<SignupScreen> {
   // Controllers  ----------------------------------------------------- //
   final TextEditingController nameController = TextEditingController();       // <-- added
   final TextEditingController emailController = TextEditingController();      // <-- added
   final TextEditingController passController = TextEditingController();       // <-- added
   final TextEditingController repassController = TextEditingController();     // <-- added
+
+  // Password visibility
+  bool _obscurePass = true;
+  bool _obscureRePass = true;
 
   void showMsg(BuildContext context, String text) {                           // <-- added
     ScaffoldMessenger.of(context).showSnackBar(
@@ -108,11 +117,21 @@ class SignupScreen extends StatelessWidget {
                         // Password
                         TextField(
                           controller: passController,
-                          obscureText: true,
+                          obscureText: _obscurePass,
                           decoration: InputDecoration(
                             labelText: "Password",
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePass ? Icons.visibility : Icons.visibility_off,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePass = !_obscurePass;
+                                });
+                              },
                             ),
                           ),
                         ),
@@ -122,11 +141,21 @@ class SignupScreen extends StatelessWidget {
                         // Confirm pass
                         TextField(
                           controller: repassController,
-                          obscureText: true,
+                          obscureText: _obscureRePass,
                           decoration: InputDecoration(
                             labelText: "Confirm Password",
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureRePass ? Icons.visibility : Icons.visibility_off,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscureRePass = !_obscureRePass;
+                                });
+                              },
                             ),
                           ),
                         ),
@@ -174,13 +203,20 @@ class SignupScreen extends StatelessWidget {
                               }
 
                               try {
-                                await AuthService().signUp(
+                                final user = await AuthService().signUp(
                                   fullName: name,
                                   email: email,
                                   password: pass,
                                 );
 
-                                // Navigate back to Login
+                                if (user == null) {
+                                  // Đăng ký thất bại
+                                  showMsg(context, "Sign-up failed. Please try again.");
+                                  return; // Không chuyển hướng
+                                }
+
+                                // Đăng ký thành công → chuyển hướng về Login
+                                showMsg(context, "Sign-up successful! Please login.");
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(

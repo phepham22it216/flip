@@ -11,9 +11,13 @@ import 'package:flip/features/more/screens/login_page.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flip/features/more/services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Khởi tạo GoogleSignIn
+  initGoogleSignIn(); // gọi từ auth_service.dart
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,

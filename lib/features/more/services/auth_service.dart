@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:bcrypt/bcrypt.dart';
 import '../models/user_model.dart';
@@ -76,52 +77,83 @@ class AuthService {
     }
   }
 
-  // ------------------------------
+
+
   // SIGN IN WITH GOOGLE
   // ------------------------------
   Future<UserModel?> loginWithGoogle() async {
     try {
-      // Authenticate user
-      final GoogleSignInAccount? googleUser = await GoogleSignIn.instance.authenticate();
+      User? firebaseUser;
 
-      if (googleUser == null) return null;
+      if (kIsWeb) {
+        // --- Web ---
+        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        final UserCredential result = await _auth.signInWithPopup(
+            googleProvider);
+        firebaseUser = result.user;
+      } else {
+        // --- Mobile (Android/iOS) ---
+        final googleUser = await GoogleSignIn.instance.authenticate();
+        if (googleUser == null) return null;
 
-      // Lấy idToken
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+        final googleAuth = googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+            idToken: googleAuth.idToken);
 
-      // Tạo credential Firebase
-      final credential = GoogleAuthProvider.credential(
-        idToken: googleAuth.idToken,
-      );
+        final result = await _auth.signInWithCredential(credential);
+        firebaseUser = result.user;
+      }
+      if (firebaseUser == null) return null;
+      final uid = firebaseUser.uid;
 
-      // Đăng nhập Firebase
-      UserCredential result = await FirebaseAuth.instance.signInWithCredential(credential);
-
-      String uid = result.user!.uid;
-
-      // Kiểm tra user trong DB của bạn
       UserModel? user = await _db.getUser(uid);
-
       if (user == null) {
         user = UserModel(
           userId: uid,
-          fullName: googleUser.displayName ?? "",
-          email: googleUser.email,
+          fullName: firebaseUser.displayName ?? "",
+          email: firebaseUser.email ?? "",
           passwordHash: "",
-          avatarUrl: googleUser.photoUrl ?? "",
+          avatarUrl: firebaseUser.photoURL ?? "",
           role: null,
           status: null,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
-
         await _db.saveUser(user);
       }
 
       return user;
-    } catch (e) {
+    } catch(e){
       print("Google Login error: $e");
       return null;
     }
+  }
+
+  // ------------------------------
+  // SIGN OUT
+  // ------------------------------
+  Future<void> signOut() async {
+    await _auth.signOut();
+
+    try {
+      final googleSignIn = GoogleSignIn.instance;
+      await googleSignIn.signOut();
+    } catch (_) {
+      // Ignore if GoogleSignIn fails
+    }
+  }
+}
+
+// ------------------------------
+void initGoogleSignIn() {
+  if (!kIsWeb) {
+    // Chỉ Android/iOS mới cần serverClientId
+    GoogleSignIn.instance.initialize(
+      clientId: null,
+      serverClientId: "639479435926-23qn77ll1nb0o2jpsbbiiudsjilgubbs.apps.googleusercontent.com",
+    );
+  } else {
+    // Web không cần serverClientId
+    GoogleSignIn.instance.initialize();
   }
 }
