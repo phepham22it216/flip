@@ -9,6 +9,7 @@ import 'package:flip/features/more/screens/more_page.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flip/features/more/screens/login_page.dart';
 
+
 void main() {
   initializeDateFormatting('vi_VN', null).then((_) {
     runApp(const MyApp());
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
         ),
         fontFamily: 'Roboto',
       ),
-      home: const LoginScreen(),
+      home: LoginScreen(),
     );
   }
 }
