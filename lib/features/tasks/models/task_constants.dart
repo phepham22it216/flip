@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flip/theme/app_colors.dart';
 
 /// Constants cho Task Management
 class TaskConstants {
@@ -140,4 +141,23 @@ class TaskConstants {
   static const bool defaultReminderEnabled = true;
   static const bool defaultPinned = false;
   static const int defaultPercent = 0;
+
+  // ============ MÀU SẮC - CONVERSION (COLOR CONVERSION) ============
+  static String getColorName(Color color) {
+    if (color == AppColors.tim1) return 'tim1';
+    if (color == AppColors.tim2) return 'tim2';
+    if (color == AppColors.hong) return 'hong';
+    if (color == AppColors.da) return 'da';
+    if (color == AppColors.xanh1) return 'xanh1';
+    if (color == AppColors.xanh2) return 'xanh2';
+    if (color == AppColors.xanh3) return 'xanh3';
+    if (color == AppColors.doSoft) return 'doSoft';
+    if (color == AppColors.xanhLa1) return 'xanhLa1';
+    if (color == AppColors.xanhLa2) return 'xanhLa2';
+    if (color == AppColors.xanhLa3) return 'xanhLa3';
+    if (color == AppColors.cam) return 'cam';
+    if (color == AppColors.vang) return 'vang';
+    if (color == AppColors.success) return 'success';
+    return 'xanh1'; // default fallback
+  }
 }

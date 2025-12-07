@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flip/features/tasks/models/task_constants.dart';
+import 'package:flip/theme/app_colors.dart';
 
 class TaskModel {
   final String id;
@@ -7,6 +8,7 @@ class TaskModel {
   final String subtitle;
   final int percent;
   final Color color;
+  final String colorName;
   final DateTime startTime;
   final DateTime endTime;
   final int priority; // 1: Low, 2: Medium, 3: High
@@ -18,6 +20,7 @@ class TaskModel {
   final String? repeatText; // e.g., 'Mỗi 4 Thứ Bảy'
   final DateTime? repeatEndDate;
   final bool pinned;
+  final String? matrixQuadrant; // DO_FIRST, SCHEDULE, DELEGATE, ELIMINATE
 
   TaskModel({
     required this.id,
@@ -25,6 +28,7 @@ class TaskModel {
     this.subtitle = '',
     this.percent = 0,
     required this.color,
+    required this.colorName,
     required this.startTime,
     required this.endTime,
     this.priority = TaskConstants.defaultPriority,
@@ -36,6 +40,7 @@ class TaskModel {
     this.repeatText,
     this.repeatEndDate,
     this.pinned = TaskConstants.defaultPinned,
+    this.matrixQuadrant,
   });
 
   TaskModel copyWith({
@@ -45,6 +50,7 @@ class TaskModel {
     int? percent,
     String? durationText,
     Color? color,
+    String? colorName,
     DateTime? startTime,
     DateTime? endTime,
     int? priority,
@@ -56,6 +62,7 @@ class TaskModel {
     String? repeatText,
     DateTime? repeatEndDate,
     bool? pinned,
+    String? matrixQuadrant,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -63,6 +70,7 @@ class TaskModel {
       subtitle: subtitle ?? this.subtitle,
       percent: percent ?? this.percent,
       color: color ?? this.color,
+      colorName: colorName ?? this.colorName,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       priority: priority ?? this.priority,
@@ -74,6 +82,7 @@ class TaskModel {
       repeatText: repeatText ?? this.repeatText,
       repeatEndDate: repeatEndDate ?? this.repeatEndDate,
       pinned: pinned ?? this.pinned,
+      matrixQuadrant: matrixQuadrant ?? this.matrixQuadrant,
     );
   }
 
@@ -87,6 +96,7 @@ class TaskModel {
       'status': isDone
           ? TaskConstants.statusCompleted
           : TaskConstants.statusInProgress,
+      'colorName': colorName,
       'matrixQuadrant': _getQuadrantFromColor(),
       'priority': priority,
       'difficulty': difficulty,
@@ -100,7 +110,6 @@ class TaskModel {
       'repeatText': repeatText,
       'repeatEndDate': repeatEndDate?.millisecondsSinceEpoch,
       'pinned': pinned,
-      // timestamp server (khi set/update ở service)
       'createdAt': DateTime.now(),
       'updatedAt': DateTime.now(),
     };
@@ -118,12 +127,6 @@ class TaskModel {
 
   /// Tạo TaskModel từ data Realtime Database
   factory TaskModel.fromMap(Map<String, dynamic> data, String docId) {
-    // Mapping matrixQuadrant sang màu (sử dụng TaskConstants)
-    Color getColorFromQuadrant(String? quadrant) {
-      if (quadrant == null) return TaskConstants.colorEliminate;
-      return TaskConstants.getColorFromQuadrant(quadrant);
-    }
-
     int getPriority(dynamic value) {
       if (value is int) return value;
       if (value is String)
@@ -161,6 +164,10 @@ class TaskModel {
 
     final repeatEndMs = data['repeatEndDate'];
 
+    // Get colorName from data, fallback to matrixQuadrant
+    final colorNameStr = (data['colorName'] as String?) ?? 'xanh1';
+    final taskColor = _getColorFromName(colorNameStr);
+
     return TaskModel(
       id: docId,
       title: data['title'] ?? 'Untitled Task',
@@ -169,7 +176,8 @@ class TaskModel {
           ? data['percent'] as int
           : int.tryParse(data['percent'].toString()) ??
                 TaskConstants.defaultPercent,
-      color: getColorFromQuadrant(data['matrixQuadrant'] as String?),
+      color: taskColor,
+      colorName: colorNameStr,
       startTime: startTime,
       endTime: endTime,
       priority: getPriority(data['priority']),
@@ -183,7 +191,44 @@ class TaskModel {
       repeatText: data['repeatText'] as String?,
       repeatEndDate: repeatEndMs == null ? null : parseMs(repeatEndMs),
       pinned: (data['pinned'] as bool?) ?? TaskConstants.defaultPinned,
+      matrixQuadrant:
+          (data['matrixQuadrant'] as String?) ?? TaskConstants.defaultQuadrant,
     );
+  }
+
+  static Color _getColorFromName(String colorName) {
+    switch (colorName) {
+      case 'hong':
+        return AppColors.hong;
+      case 'da':
+        return AppColors.da;
+      case 'xanh2':
+        return AppColors.xanh2;
+      case 'xanh1':
+        return AppColors.xanh1;
+      case 'xanh3':
+        return AppColors.xanh3;
+      case 'doSoft':
+        return AppColors.doSoft;
+      case 'xanhLa1':
+        return AppColors.xanhLa1;
+      case 'xanhLa2':
+        return AppColors.xanhLa2;
+      case 'xanhLa3':
+        return AppColors.xanhLa3;
+      case 'tim1':
+        return AppColors.tim1;
+      case 'tim2':
+        return AppColors.tim2;
+      case 'cam':
+        return AppColors.cam;
+      case 'vang':
+        return AppColors.vang;
+      case 'success':
+        return AppColors.success;
+      default:
+        return AppColors.xanh1; // Default color
+    }
   }
 
   String _getQuadrantFromColor() {

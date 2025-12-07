@@ -389,11 +389,16 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
         ).showSnackBar(const SnackBar(content: Text('Vui lòng đăng nhập')));
         return;
       }
+
+      final colorName = TaskConstants.getColorName(
+        _colorOptions[_selectedColorIndex].color,
+      );
       final task = TaskModel(
         id: '',
         title: _titleController.text.trim(),
         subtitle: _noteController.text.trim(),
         color: _colorOptions[_selectedColorIndex].color,
+        colorName: colorName,
         startTime: _startDateTime,
         endTime: _endDateTime,
         priority: _selectedPriority,

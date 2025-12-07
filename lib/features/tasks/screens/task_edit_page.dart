@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flip/features/tasks/models/task_model.dart';
+import 'package:flip/features/tasks/models/task_constants.dart';
+import 'package:flip/features/tasks/services/task_service.dart';
 import 'package:flip/features/tasks/widgets/task_edit/color_card.dart';
-import 'package:flip/features/tasks/widgets/task_edit/schedule_card.dart';
 import 'package:flip/features/tasks/widgets/task_create/repeat_dialog.dart';
 import 'package:flip/theme/app_colors.dart';
+import 'package:flip/features/tasks/widgets/task_edit/edit_bottom_sheet_header.dart';
+import 'package:flip/features/tasks/widgets/task_edit/edit_bottom_sheet_content.dart';
+import 'package:flip/features/tasks/widgets/task_edit/add_reminder_dialog.dart';
 
 class TaskEditPage extends StatefulWidget {
   final TaskModel task;
@@ -17,6 +21,7 @@ class TaskEditPage extends StatefulWidget {
 class _TaskEditPageState extends State<TaskEditPage> {
   late TextEditingController _titleController;
   late TextEditingController _noteController;
+  final TaskService _taskService = TaskService();
 
   final List<TaskColorOption> _colorOptions = const [
     TaskColorOption(label: 'Tím 1', color: AppColors.tim1),
@@ -61,6 +66,13 @@ class _TaskEditPageState extends State<TaskEditPage> {
   // ignore: unused_field
   int _repeatType = 0; // 0: daily, 1: weekly, 2: monthly, 3: yearly
 
+  int _selectedPriority = 1; // 1: Low, 2: Medium, 3: High
+  int _selectedDifficulty = 1; // 1: Easy, 2: Medium, 3: Hard
+  bool _isGroupMode = false; // false: Personal, true: Group
+  String _selectedGroup = 'Nhóm';
+
+  final List<String> _groups = const ['Nhóm', 'Work', 'Personal', 'Shopping'];
+
   @override
   void initState() {
     super.initState();
@@ -87,6 +99,14 @@ class _TaskEditPageState extends State<TaskEditPage> {
 
     // Initialize pinned state from task
     _pinned = widget.task.pinned;
+
+    // Initialize priority and difficulty from task
+    _selectedPriority = widget.task.priority;
+    _selectedDifficulty = widget.task.difficulty;
+    _selectedGroup = widget.task.groupName.isNotEmpty
+        ? widget.task.groupName
+        : 'Nhóm';
+    _isGroupMode = widget.task.groupName.isNotEmpty;
 
     // Show edit bottom sheet automatically when page loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -136,89 +156,40 @@ class _TaskEditPageState extends State<TaskEditPage> {
                     ),
                     child: Column(
                       children: [
-                        // Handle bar
-                        Center(
-                          child: Container(
-                            width: 40,
-                            height: 4,
-                            margin: const EdgeInsets.only(bottom: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
+                        EditBottomSheetHeader(
+                          titleController: _titleController,
+                          onBackPressed: () => Navigator.pop(context),
+                          onCheckPressed: () {
+                            _updateTask();
+                            Navigator.pop(context);
+                          },
                         ),
-                        // Header with back arrow, title, and checkmark
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 8,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.arrow_back, size: 24),
-                                onPressed: () {
-                                  Navigator.pop(context); // Close bottom sheet
-                                },
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                              ),
-                              Expanded(
-                                child: TextField(
-                                  controller: _titleController,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  decoration: const InputDecoration(
-                                    hintText: 'Tiêu đề',
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.check,
-                                  size: 24,
-                                  color: Colors.green,
-                                ),
-                                onPressed: () {
-                                  _saveTask();
-                                  Navigator.pop(context); // Close bottom sheet
-                                },
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        _buildTitleCard(),
-                        const SizedBox(height: 14),
-                        ScheduleCard(
+                        EditBottomSheetContent(
+                          noteController: _noteController,
                           allDay: _allDay,
                           startDateTime: _startDateTime,
                           endDateTime: _endDateTime,
                           reminderEnabled: _reminderEnabled,
                           reminders: _reminders,
                           pinned: _pinned,
-                          onAllDayChanged: (value) {
+                          repeatText: _repeatText,
+                          repeatEndDate: _repeatEndDate,
+                          isGroupMode: _isGroupMode,
+                          selectedGroup: _selectedGroup,
+                          groups: _groups,
+                          selectedPriority: _selectedPriority,
+                          selectedDifficulty: _selectedDifficulty,
+                          colorOptions: _colorOptions,
+                          selectedColorIndex: _selectedColorIndex,
+                          onAllDayChanged: () {
                             setModalState(() {
                               setState(() {
-                                _allDay = value;
-                                if (value) {
+                                _allDay = !_allDay;
+                                if (_allDay) {
                                   _startDateTime = DateTime(
                                     _startDateTime.year,
                                     _startDateTime.month,
                                     _startDateTime.day,
-                                    0,
-                                    0,
                                   );
                                   _endDateTime = DateTime(
                                     _endDateTime.year,
@@ -239,9 +210,11 @@ class _TaskEditPageState extends State<TaskEditPage> {
                             isStart: false,
                             setModalState: setModalState,
                           ),
-                          onReminderToggle: (value) {
+                          onReminderToggle: () {
                             setModalState(() {
-                              setState(() => _reminderEnabled = value);
+                              setState(
+                                () => _reminderEnabled = !_reminderEnabled,
+                              );
                             });
                           },
                           onReminderRemove: (index) {
@@ -253,13 +226,11 @@ class _TaskEditPageState extends State<TaskEditPage> {
                               _showAddReminderOptions(setModalState),
                           onRepeatTap: () =>
                               _showRepeatOptionsDialog(setModalState),
-                          onPinnedChanged: (value) {
+                          onPinnedChanged: () {
                             setModalState(() {
-                              setState(() => _pinned = value);
+                              setState(() => _pinned = !_pinned);
                             });
                           },
-                          repeatText: _repeatText,
-                          repeatEndDate: _repeatEndDate,
                           onRemoveRepeat: () {
                             setModalState(() {
                               setState(() => _repeatText = null);
@@ -270,19 +241,37 @@ class _TaskEditPageState extends State<TaskEditPage> {
                               setState(() => _repeatEndDate = null);
                             });
                           },
-                        ),
-                        const SizedBox(height: 14),
-                        ColorCard(
-                          colorOptions: _colorOptions,
-                          selectedIndex: _selectedColorIndex,
-                          onSelect: (index) {
+                          onModeChanged: (isGroup) {
+                            setModalState(() {
+                              setState(() => _isGroupMode = isGroup);
+                            });
+                          },
+                          onGroupChanged: (value) {
+                            setModalState(() {
+                              setState(() => _selectedGroup = value);
+                            });
+                          },
+                          onPriorityChanged: (priority) {
+                            setModalState(() {
+                              setState(() => _selectedPriority = priority);
+                            });
+                          },
+                          onDifficultyChanged: (difficulty) {
+                            setModalState(() {
+                              setState(() => _selectedDifficulty = difficulty);
+                            });
+                          },
+                          onColorSelected: (index) {
                             setModalState(() {
                               setState(() => _selectedColorIndex = index);
                             });
                           },
                           onCustomColor: () {},
+                          onUpdatePressed: () {
+                            _updateTask();
+                            Navigator.pop(context);
+                          },
                         ),
-                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
@@ -293,17 +282,34 @@ class _TaskEditPageState extends State<TaskEditPage> {
         );
       },
     ).then((_) {
-      // Navigate back when bottom sheet is closed
       Navigator.of(context).pop();
     });
   }
 
-  void _saveTask() {
-    // TODO: Implement save logic here
-    // You can update the task with new values and save to database/state management
+  void _updateTask() async {
+    try {
+      final colorName = TaskConstants.getColorName(
+        _colorOptions[_selectedColorIndex].color,
+      );
+      final updatedTask = widget.task.copyWith(
+        title: _titleController.text.trim(),
+        subtitle: _noteController.text.trim(),
+        color: _colorOptions[_selectedColorIndex].color,
+        colorName: colorName,
+        startTime: _startDateTime,
+        endTime: _endDateTime,
+        priority: _selectedPriority,
+        difficulty: _selectedDifficulty,
+        groupName: _isGroupMode ? _selectedGroup : '',
+        reminders: List<String>.from(_reminders),
+        reminderEnabled: _reminderEnabled,
+        repeatText: _repeatText,
+        repeatEndDate: _repeatEndDate,
+        pinned: _pinned,
+      );
 
-    // Show success message after bottom sheet is closed
-    Future.delayed(const Duration(milliseconds: 100), () {
+      await _taskService.updateTask(widget.task.id, updatedTask);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -313,58 +319,17 @@ class _TaskEditPageState extends State<TaskEditPage> {
           ),
         );
       }
-    });
-  }
-
-  Widget _buildTitleCard() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
           ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _noteController,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                hintText: 'Thêm chi tiết',
-                border: InputBorder.none,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          OutlinedButton.icon(
-            onPressed: () {},
-            style: OutlinedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              side: BorderSide(color: Colors.grey.shade300),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            ),
-            icon: const Icon(Icons.add, color: AppColors.xanh1),
-            label: const Text(
-              'Sticker',
-              style: TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+        );
+      }
+    }
   }
 
   Future<void> _pickDateTime({
@@ -430,79 +395,18 @@ class _TaskEditPageState extends State<TaskEditPage> {
   }
 
   Future<void> _showAddReminderOptions(StateSetter setModalState) async {
-    const options = [
-      'Cả ngày',
-      '5 phút trước',
-      '10 phút trước',
-      '15 phút trước',
-      '30 phút trước',
-      '1 giờ trước',
-      '1 ngày trước',
-    ];
-
     await showDialog(
       context: context,
       builder: (ctx) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        'Hủy',
-                        style: TextStyle(color: Colors.blue, fontSize: 16),
-                      ),
-                    ),
-                    const Text(
-                      'Thời gian nhắc nhở ',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(width: 48),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Flexible(
-                child: ListView(
-                  shrinkWrap: true,
-                  children: options.map((option) {
-                    return ListTile(
-                      title: Text(
-                        option,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey.shade600,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      onTap: () {
-                        setModalState(() {
-                          setState(() {
-                            _reminders.clear();
-                            _reminders.add(option);
-                          });
-                        });
-                        Navigator.pop(context);
-                      },
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
+        return AddReminderDialog(
+          onReminderSelected: (option) {
+            setModalState(() {
+              setState(() {
+                _reminders.clear();
+                _reminders.add(option);
+              });
+            });
+          },
         );
       },
     );

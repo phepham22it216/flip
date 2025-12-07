@@ -79,7 +79,7 @@ class TaskService {
   /// Cập nhật task
   Future<void> updateTask(String taskId, TaskModel task) async {
     final data = task.toMap();
-    data.remove('createdAt'); // không override createdAt
+    data.remove('createdAt');
     data['updatedAt'] = ServerValue.timestamp;
 
     await _tasksRef.child(taskId).update(data);

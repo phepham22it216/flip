@@ -7,7 +7,7 @@ import 'package:flip/features/tasks/widgets/task_list/quick_action_button.dart';
 import 'package:flip/features/tasks/widgets/task_list/card/task_card_item.dart';
 import 'package:flip/features/tasks/widgets/task_list/action_sheet_button.dart';
 import 'package:flip/features/tasks/widgets/task_list/task_detail_modal.dart';
-import 'package:flip/features/tasks/widgets/task_list/matrix/task_matrix.dart';
+import 'package:flip/features/tasks/screens/task_matrix_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flip/theme/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
