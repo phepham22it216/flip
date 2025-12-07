@@ -26,7 +26,6 @@ class EmptyState extends StatelessWidget {
         icon = Icons.event_available;
         break;
       case TaskFilter.all:
-      default:
         message = 'Tuyệt vời! Bạn đã hoàn thành tất cả';
         icon = Icons.task_alt;
     }

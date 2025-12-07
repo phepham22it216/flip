@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flip/theme/app_colors.dart';
-import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
 
 class StatisticsCard extends StatelessWidget {
-  final List<TaskItem> tasks;
+  final List<TaskModel> tasks;
   final int overdueCount;
 
   const StatisticsCard({

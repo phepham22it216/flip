@@ -1,4 +1,4 @@
-import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flip/theme/app_colors.dart';
 import 'package:flip/features/tasks/widgets/task_incomplete/statistics_card.dart';
@@ -17,13 +17,12 @@ class _TaskIncompletePageState extends State<TaskIncompletePage> {
   TaskFilter _selectedFilter = TaskFilter.all;
 
   // Mock data - Replace with actual data from your service
-  final List<TaskItem> _allTasks = [
-    TaskItem(
+  final List<TaskModel> _allTasks = [
+    TaskModel(
       id: '1',
       title: "Reading",
       subtitle: "Đọc sách tài liệu liên quan đến Flutter và Dart",
       percent: 0,
-      durationText: "00:00:00",
       color: AppColors.hong,
       startTime: DateTime.now().copyWith(hour: 8, minute: 0),
       endTime: DateTime.now().copyWith(hour: 10, minute: 0),
@@ -33,12 +32,11 @@ class _TaskIncompletePageState extends State<TaskIncompletePage> {
       groupName: 'Học tập',
       pinned: true,
     ),
-    TaskItem(
+    TaskModel(
       id: '2',
       title: "Học Đa Nền Tảng",
       subtitle: "Hoàn thành các bài tập thực hành trong lớp học",
       percent: 50,
-      durationText: "02:30:00",
       color: AppColors.tim1,
       startTime: DateTime.now().add(const Duration(days: 1)).copyWith(hour: 9),
       endTime: DateTime.now()
@@ -49,12 +47,11 @@ class _TaskIncompletePageState extends State<TaskIncompletePage> {
       isDone: false,
       groupName: 'Lớp học',
     ),
-    TaskItem(
+    TaskModel(
       id: '3',
       title: "Làm bài tập Flutter",
       subtitle: "Hoàn thành project todo app với Firebase",
       percent: 30,
-      durationText: "01:15:00",
       color: AppColors.cam,
       startTime: DateTime.now()
           .subtract(const Duration(days: 2))
@@ -67,12 +64,11 @@ class _TaskIncompletePageState extends State<TaskIncompletePage> {
       isDone: false,
       groupName: 'Project',
     ),
-    TaskItem(
+    TaskModel(
       id: '4',
       title: "Học Java",
       subtitle: "Ôn tập các kiến thức về Java OOP",
       percent: 75,
-      durationText: "03:45:00",
       color: AppColors.xanh2,
       startTime: DateTime.now().add(const Duration(days: 3)).copyWith(hour: 13),
       endTime: DateTime.now()
@@ -83,12 +79,11 @@ class _TaskIncompletePageState extends State<TaskIncompletePage> {
       isDone: false,
       groupName: 'Lập trình',
     ),
-    TaskItem(
+    TaskModel(
       id: '5',
       title: "Meeting Team",
       subtitle: "Thảo luận về dự án mới",
       percent: 0,
-      durationText: "00:00:00",
       color: AppColors.xanhLa1,
       startTime: DateTime.now()
           .subtract(const Duration(days: 1))
@@ -103,10 +98,9 @@ class _TaskIncompletePageState extends State<TaskIncompletePage> {
     ),
   ];
 
-  List<TaskItem> get _filteredTasks {
+  List<TaskModel> get _filteredTasks {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final tomorrow = today.add(const Duration(days: 1));
 
     switch (_selectedFilter) {
       case TaskFilter.today:
@@ -137,7 +131,6 @@ class _TaskIncompletePageState extends State<TaskIncompletePage> {
           return !task.isDone && taskDate.isAfter(today);
         }).toList();
       case TaskFilter.all:
-      default:
         return _allTasks.where((task) => !task.isDone).toList();
     }
   }
@@ -201,9 +194,9 @@ class _TaskIncompletePageState extends State<TaskIncompletePage> {
     );
   }
 
-  Widget _buildTaskList(List<TaskItem> tasks) {
+  Widget _buildTaskList(List<TaskModel> tasks) {
     // Group tasks by date
-    final groupedTasks = <DateTime, List<TaskItem>>{};
+    final groupedTasks = <DateTime, List<TaskModel>>{};
     for (final task in tasks) {
       final date = DateTime(
         task.startTime.year,

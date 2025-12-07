@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
 import 'package:flip/features/tasks/widgets/task_edit/color_card.dart';
 import 'package:flip/features/tasks/widgets/task_edit/schedule_card.dart';
 import 'package:flip/features/tasks/widgets/task_create/repeat_dialog.dart';
 import 'package:flip/theme/app_colors.dart';
 
 class TaskEditPage extends StatefulWidget {
-  final TaskItem task;
+  final TaskModel task;
 
   const TaskEditPage({super.key, required this.task});
 
@@ -46,12 +46,19 @@ class _TaskEditPageState extends State<TaskEditPage> {
 
   String? _repeatText;
   DateTime? _repeatEndDate;
+  // ignore: unused_field
   int? _dailyEvery;
+  // ignore: unused_field
   int? _weeklyEvery;
+  // ignore: unused_field
   List<bool>? _weekdaySelected;
+  // ignore: unused_field
   int? _monthlyDay;
+  // ignore: unused_field
   int? _yearlyMonth;
+  // ignore: unused_field
   int? _yearlyDay;
+  // ignore: unused_field
   int _repeatType = 0; // 0: daily, 1: weekly, 2: monthly, 3: yearly
 
   @override

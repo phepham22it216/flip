@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flip/theme/app_colors.dart';
-import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
 import 'package:flip/features/tasks/screens/task_detail_page.dart';
 import 'package:intl/intl.dart';
 
 class IncompleteTaskCard extends StatelessWidget {
-  final TaskItem task;
+  final TaskModel task;
   final bool isOverdue;
 
   const IncompleteTaskCard({

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
 import 'package:flip/features/tasks/widgets/task_list/calendar/calendar_day_cell.dart';
 import 'package:flip/theme/app_colors.dart';
 
@@ -8,7 +8,7 @@ class TaskTableCalendar extends StatelessWidget {
   final DateTime focusedDay;
   final DateTime? selectedDay;
   final CalendarFormat format;
-  final List<TaskItem> Function(DateTime) getTasksForDay;
+  final List<TaskModel> Function(DateTime) getTasksForDay;
   final ValueChanged<DateTime> onFocusedDayChanged;
   final void Function(DateTime selectedDay, DateTime focusedDay) onDaySelected;
 
@@ -17,7 +17,7 @@ class TaskTableCalendar extends StatelessWidget {
     required this.focusedDay,
     required this.selectedDay,
     required this.format,
-    required this.getTasksForDay, 
+    required this.getTasksForDay,
     required this.onFocusedDayChanged,
     required this.onDaySelected,
   });
@@ -41,7 +41,7 @@ class TaskTableCalendar extends StatelessWidget {
 
           return SizedBox(
             height: constraints.maxHeight,
-            child: TableCalendar<TaskItem>(
+            child: TableCalendar<TaskModel>(
               locale: 'vi_VN',
               firstDay: DateTime.utc(2020, 1, 1),
               lastDay: DateTime.utc(2030, 12, 31),

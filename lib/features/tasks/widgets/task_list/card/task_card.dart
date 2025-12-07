@@ -1,9 +1,9 @@
-import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flip/theme/app_colors.dart';
 
 class TaskCard extends StatelessWidget {
-  final TaskItem task;
+  final TaskModel task;
   final VoidCallback? onTap;
 
   const TaskCard({super.key, required this.task, this.onTap});

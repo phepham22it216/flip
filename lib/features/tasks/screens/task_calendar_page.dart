@@ -3,15 +3,15 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import 'package:flip/theme/app_colors.dart';
-import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
 import 'package:flip/features/tasks/widgets/task_list/calendar/calendar_header.dart';
 import 'package:flip/features/tasks/widgets/task_list/calendar/calendar_view_mode.dart';
-import 'package:flip/features/tasks/widgets/task_list/task_day_timeline.dart';
+import 'package:flip/features/tasks/widgets/task_list/calendar/task_day_timeline.dart';
 import 'package:flip/features/tasks/widgets/task_list/calendar/task_table_calendar.dart';
-import 'package:flip/features/tasks/widgets/task_list/week_time_table.dart';
+import 'package:flip/features/tasks/widgets/task_list/calendar/week_time_table.dart';
 
 class TaskCalendarPage extends StatefulWidget {
-  final List<TaskItem> tasks;
+  final List<TaskModel> tasks;
 
   const TaskCalendarPage({super.key, required this.tasks});
 
@@ -25,7 +25,7 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
   CalendarViewMode _viewMode = CalendarViewMode.month;
 
   /// Map ngày (yyyy-MM-dd) -> danh sách task của ngày đó
-  late final Map<DateTime, List<TaskItem>> _tasksByDate;
+  late final Map<DateTime, List<TaskModel>> _tasksByDate;
 
   @override
   void initState() {
@@ -39,8 +39,8 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
     _tasksByDate = _groupTasksByDate(widget.tasks);
   }
 
-  Map<DateTime, List<TaskItem>> _groupTasksByDate(List<TaskItem> tasks) {
-    final map = <DateTime, List<TaskItem>>{};
+  Map<DateTime, List<TaskModel>> _groupTasksByDate(List<TaskModel> tasks) {
+    final map = <DateTime, List<TaskModel>>{};
     for (final task in tasks) {
       final key = DateTime(
         task.startTime.year,
@@ -52,7 +52,7 @@ class _TaskCalendarPageState extends State<TaskCalendarPage> {
     return map;
   }
 
-  List<TaskItem> _getTasksForDay(DateTime day) {
+  List<TaskModel> _getTasksForDay(DateTime day) {
     final key = DateTime(day.year, day.month, day.day);
     return _tasksByDate[key] ?? [];
   }

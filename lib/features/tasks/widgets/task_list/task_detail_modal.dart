@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
 import 'package:flip/theme/app_colors.dart';
 
 enum _TaskMenuAction { complete, edit, delete }
 
 class TaskDetailModal extends StatefulWidget {
-  final TaskItem task;
+  final TaskModel task;
 
   const TaskDetailModal({Key? key, required this.task}) : super(key: key);
 

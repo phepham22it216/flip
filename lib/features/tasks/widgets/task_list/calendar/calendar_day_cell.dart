@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
 import 'package:flip/features/tasks/widgets/task_list/task_detail_modal.dart';
 import 'package:flip/theme/app_colors.dart';
 
@@ -9,7 +9,7 @@ class CalendarDayCell extends StatelessWidget {
   final bool isSelected;
   final bool isToday;
   final bool isOutside;
-  final List<TaskItem> tasks;
+  final List<TaskModel> tasks;
 
   const CalendarDayCell({
     super.key,
@@ -93,7 +93,7 @@ class CalendarDayCell extends StatelessWidget {
 }
 
 class _TaskPill extends StatelessWidget {
-  final TaskItem task;
+  final TaskModel task;
   final bool isOutside;
 
   const _TaskPill({required this.task, required this.isOutside});

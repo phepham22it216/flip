@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
 import 'package:flip/theme/app_colors.dart';
 import 'package:flip/features/tasks/widgets/task_detail/detail_tile.dart';
 import 'package:flip/features/tasks/widgets/task_detail/time_range_card.dart';
@@ -9,11 +9,16 @@ import 'package:flip/features/tasks/widgets/task_detail/task_helpers.dart';
 
 enum _TaskMenuAction { complete, edit, delete }
 
-class TaskDetailPage extends StatelessWidget {
-  final TaskItem task;
+class TaskDetailPage extends StatefulWidget {
+  final TaskModel task;
 
   const TaskDetailPage({super.key, required this.task});
 
+  @override
+  State<TaskDetailPage> createState() => _TaskDetailPageState();
+}
+
+class _TaskDetailPageState extends State<TaskDetailPage> {
   String _formatDateTime(DateTime dt) {
     final date = DateFormat('EEE, dd MMM yyyy', 'vi_VN').format(dt);
     final time = DateFormat('HH:mm').format(dt);
@@ -74,8 +79,8 @@ class TaskDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final start = _formatDateTime(task.startTime);
-    final end = _formatDateTime(task.endTime);
+    final start = _formatDateTime(widget.task.startTime);
+    final end = _formatDateTime(widget.task.endTime);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -84,7 +89,7 @@ class TaskDetailPage extends StatelessWidget {
         elevation: 0,
         leadingWidth: 110,
         title: Text(
-          task.title,
+          widget.task.title,
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 18,
@@ -126,17 +131,17 @@ class TaskDetailPage extends StatelessWidget {
             // Mức độ quan trọng
             DetailTile(
               icon: Icons.flag_rounded,
-              iconColor: TaskHelpers.priorityColor(task.priority),
+              iconColor: TaskHelpers.priorityColor(widget.task.priority),
               title: 'Mức độ quan trọng',
-              value: TaskHelpers.priorityText(task.priority),
+              value: TaskHelpers.priorityText(widget.task.priority),
             ),
 
             // Độ khó
             DetailTile(
               icon: Icons.flash_on_rounded,
-              iconColor: TaskHelpers.difficultyColor(task.difficulty),
+              iconColor: TaskHelpers.difficultyColor(widget.task.difficulty),
               title: 'Độ khó',
-              value: TaskHelpers.difficultyText(task.difficulty),
+              value: TaskHelpers.difficultyText(widget.task.difficulty),
             ),
 
             // Nhóm
@@ -144,28 +149,32 @@ class TaskDetailPage extends StatelessWidget {
               icon: Icons.group_rounded,
               iconColor: AppColors.xanh1,
               title: 'Nhóm',
-              value: task.groupName.isNotEmpty
-                  ? task.groupName
+              value: widget.task.groupName.isNotEmpty
+                  ? widget.task.groupName
                   : 'Chưa xác định',
             ),
 
             // Trạng thái
             DetailTile(
               icon: Icons.person_rounded,
-              iconColor: task.isDone ? AppColors.xanhLa2 : AppColors.doSoft,
+              iconColor: widget.task.isDone
+                  ? AppColors.xanhLa2
+                  : AppColors.doSoft,
               title: 'Trạng thái',
               valueWidget: Text(
-                task.isDone ? 'Đã hoàn thành' : 'Chưa xong',
+                widget.task.isDone ? 'Đã hoàn thành' : 'Chưa xong',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: task.isDone ? AppColors.xanhLa2 : Colors.grey[700],
+                  color: widget.task.isDone
+                      ? AppColors.xanhLa2
+                      : Colors.grey[700],
                 ),
               ),
             ),
 
             // Chi tiết / Mô tả
-            if (task.subtitle.isNotEmpty) ...[
+            if (widget.task.subtitle.isNotEmpty) ...[
               const SizedBox(height: 24),
               const Text(
                 'Chi tiết',
@@ -190,7 +199,7 @@ class TaskDetailPage extends StatelessWidget {
                   ],
                 ),
                 child: Text(
-                  task.subtitle,
+                  widget.task.subtitle,
                   style: const TextStyle(
                     fontSize: 14,
                     height: 1.6,

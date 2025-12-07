@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flip/theme/app_colors.dart';
-import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
 import 'package:flip/features/tasks/widgets/task_incomplete/incomplete_task_card.dart';
 import 'package:intl/intl.dart';
 
 class DateSection extends StatelessWidget {
   final DateTime date;
-  final List<TaskItem> tasks;
+  final List<TaskModel> tasks;
 
   const DateSection({super.key, required this.date, required this.tasks});
 
