@@ -1,15 +1,15 @@
 import 'package:firebase_database/firebase_database.dart';
 
 class UserModel {
-  final String userId;
-  final String fullName;
-  final String email;
-  final String passwordHash;
-  final String? avatarUrl;
-  final String? role;
-  final String? status;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  String userId;
+  String fullName;
+  String email;
+  String passwordHash;
+  String? avatarUrl;
+  String? role;
+  String? status;
+  DateTime createdAt;
+  DateTime updatedAt;
 
   UserModel({
     required this.userId,

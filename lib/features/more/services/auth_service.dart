@@ -9,6 +9,12 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final UserDatabaseService _db = UserDatabaseService();
 
+  Future<UserModel?> currentUser() async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+    return await _db.getUser(user.uid);
+  }
+
   // ------------------------------
   // SIGN UP (EMAIL/PASSWORD)
   // ------------------------------
@@ -142,6 +148,91 @@ class AuthService {
       // Ignore if GoogleSignIn fails
     }
   }
+
+  // ------------------------------
+  // UPDATE NAME
+  // ------------------------------
+  Future<void> updateFullName(String fullName) async {
+    final user = _auth.currentUser;
+    if (user == null) throw "No user logged in";
+
+    // Update Firebase displayName
+    await user.updateDisplayName(fullName);
+    await user.reload();
+
+    // Update Realtime DB
+    final userModel = await _db.getUser(user.uid);
+    if (userModel == null) throw "User not found";
+
+    userModel.fullName = fullName;
+    userModel.updatedAt = DateTime.now();
+    await _db.updateUser(user.uid, userModel.toMap());
+  }
+
+  // ------------------------------
+  // UPDATE MAIL
+  // ------------------------------
+  Future<void> updateEmail(String newEmail) async {
+    final user = _auth.currentUser;
+    if (user == null) throw "No user logged in";
+
+    // Firebase update email
+    await user.verifyBeforeUpdateEmail(newEmail);
+    await user.reload();
+
+    // Update Realtime DB
+    final userModel = await _db.getUser(user.uid);
+    if (userModel == null) throw "User not found";
+
+    userModel.email = newEmail;
+    userModel.updatedAt = DateTime.now();
+    await _db.updateUser(user.uid, userModel.toMap());
+  }
+
+  // ------------------------------
+  // UPDATE PASS
+  // ------------------------------
+  Future<void> updatePassword(
+      String oldPass, String newPass) async {
+    final user = _auth.currentUser;
+    if (user == null) throw "No user logged in";
+
+    final userModel = await _db.getUser(user.uid);
+    if (userModel == null) throw "User not found";
+
+    bool isValid = BCrypt.checkpw(oldPass, userModel.passwordHash);
+    if (!isValid) throw "Old password is incorrect";
+
+    // Firebase update password
+    await user.updatePassword(newPass);
+    await user.reload();
+
+    // Update hash DB
+    userModel.passwordHash = BCrypt.hashpw(newPass, BCrypt.gensalt());
+    userModel.updatedAt = DateTime.now();
+    await _db.updateUser(user.uid, userModel.toMap());
+  }
+
+  // ------------------------------
+  // UPDATE AVATAR URL
+  // ------------------------------
+  Future<void> updateAvatar(String avatarUrl) async {
+    final user = _auth.currentUser;
+    if (user == null) throw "No user logged in";
+
+    // Firebase update
+    await user.updatePhotoURL(avatarUrl);
+    await user.reload();
+
+    // Update DB
+    final userModel = await _db.getUser(user.uid);
+    if (userModel == null) throw "User not found";
+
+    userModel.avatarUrl = avatarUrl;
+    userModel.updatedAt = DateTime.now();
+    await _db.updateUser(user.uid, userModel.toMap());
+  }
+
 }
 
 // ------------------------------

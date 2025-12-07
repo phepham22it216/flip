@@ -5,7 +5,7 @@ import 'package:flip/core/widgets/main_header.dart';
 import 'package:flip/features/tasks/screens/task_list_page.dart';
 import 'package:flip/features/home/screens/home_page.dart';
 import 'package:flip/features/team/screens/team_page.dart';
-import 'package:flip/features/more/screens/more_page.dart';
+import 'package:flip/features/more/screens/account_page.dart';
 import 'package:flip/features/tasks/screens/task_create_page.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flip/features/more/screens/login_page.dart';
@@ -65,7 +65,7 @@ class _MainScreenState extends State<MainScreen> {
     TaskListPage(),
     HomePage(),
     TeamPage(),
-    MorePage(),
+    AccountPage(),
   ];
 
   @override

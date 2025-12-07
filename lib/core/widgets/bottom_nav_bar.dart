@@ -49,8 +49,8 @@ class BottomNavBar extends StatelessWidget {
                   onTap: () => onTap(2),
                 ),
                 _NavBarItem(
-                  icon: Icons.more_horiz,
-                  label: 'More',
+                  icon: Icons.account_circle_outlined,
+                  label: 'Account',
                   isSelected: currentIndex == 3,
                   onTap: () => onTap(3),
                 ),
