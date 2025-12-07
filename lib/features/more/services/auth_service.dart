@@ -81,24 +81,25 @@ class AuthService {
   // ------------------------------
   Future<UserModel?> loginWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleUser =
-      await GoogleSignIn().signIn();
+      // Authenticate user
+      final GoogleSignInAccount? googleUser = await GoogleSignIn.instance.authenticate();
 
       if (googleUser == null) return null;
 
-      final GoogleSignInAuthentication googleAuth =
-      await googleUser.authentication;
+      // Lấy idToken
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
+      // Tạo credential Firebase
       final credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
-        accessToken: googleAuth.accessToken,
       );
 
-      UserCredential result =
-      await _auth.signInWithCredential(credential);
+      // Đăng nhập Firebase
+      UserCredential result = await FirebaseAuth.instance.signInWithCredential(credential);
 
       String uid = result.user!.uid;
 
+      // Kiểm tra user trong DB của bạn
       UserModel? user = await _db.getUser(uid);
 
       if (user == null) {
