@@ -6,6 +6,7 @@ import 'package:flip/features/tasks/screens/task_list_page.dart';
 import 'package:flip/features/home/screens/home_page.dart';
 import 'package:flip/features/team/screens/team_page.dart';
 import 'package:flip/features/more/screens/more_page.dart';
+import 'package:flip/features/tasks/screens/task_create_page.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flip/features/more/screens/login_page.dart';
 import 'firebase_options.dart';
@@ -80,16 +81,9 @@ class _MainScreenState extends State<MainScreen> {
           });
         },
         onCenterTap: () {
-          showModalBottomSheet(
-            context: context,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            builder: (_) => const SizedBox(
-              height: 300,
-              child: Center(child: Text('Create new task here')),
-            ),
-          );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const TaskCreatePage()));
         },
       ),
     );

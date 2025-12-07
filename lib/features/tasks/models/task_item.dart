@@ -13,6 +13,11 @@ class TaskItem {
   final int difficulty; // 1: Easy, 2: Medium, 3: Hard
   final bool isDone;
   final String groupName;
+  final List<String> reminders; // e.g., ['5 phút trước', '1 giờ trước']
+  final bool reminderEnabled;
+  final String? repeatText; // e.g., 'Mỗi 4 Thứ Bảy'
+  final DateTime? repeatEndDate;
+  final bool pinned;
 
   TaskItem({
     required this.id,
@@ -27,6 +32,11 @@ class TaskItem {
     this.difficulty = 2,
     this.isDone = false,
     this.groupName = '',
+    this.reminders = const [],
+    this.reminderEnabled = true,
+    this.repeatText,
+    this.repeatEndDate,
+    this.pinned = false,
   });
 
   /// Creates a copy of this TaskItem but with the given fields replaced with the new values.
@@ -43,6 +53,11 @@ class TaskItem {
     int? difficulty,
     bool? isDone,
     String? groupName,
+    List<String>? reminders,
+    bool? reminderEnabled,
+    String? repeatText,
+    DateTime? repeatEndDate,
+    bool? pinned,
   }) {
     return TaskItem(
       id: id ?? this.id,
@@ -57,6 +72,11 @@ class TaskItem {
       difficulty: difficulty ?? this.difficulty,
       isDone: isDone ?? this.isDone,
       groupName: groupName ?? this.groupName,
+      reminders: reminders ?? this.reminders,
+      reminderEnabled: reminderEnabled ?? this.reminderEnabled,
+      repeatText: repeatText ?? this.repeatText,
+      repeatEndDate: repeatEndDate ?? this.repeatEndDate,
+      pinned: pinned ?? this.pinned,
     );
   }
 }
