@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "639479435926",
+    "firebase_url": "https://flip-66d56-default-rtdb.firebaseio.com",
     "project_id": "flip-66d56",
     "storage_bucket": "flip-66d56.firebasestorage.app"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.example.flip"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "639479435926-g08d6pe8i4ve2ibrvo12m53a43ug3sec.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.flip",
+            "certificate_hash": "ac03a19918dce912cea85126f553c335635e293e"
+          }
+        },
+        {
+          "client_id": "639479435926-23qn77ll1nb0o2jpsbbiiudsjilgubbs.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC5tAsIjQRa35tvMqdhyOEBO-pZoRxC5Mg"
@@ -20,7 +34,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "639479435926-23qn77ll1nb0o2jpsbbiiudsjilgubbs.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "639479435926-ekk843r23rcbuq7fqj3pk5nlmf33f6vi.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flip"
+              }
+            }
+          ]
         }
       }
     }

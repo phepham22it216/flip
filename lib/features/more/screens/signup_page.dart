@@ -155,6 +155,19 @@ class SignupScreen extends StatelessWidget {
                               final pass = passController.text.trim();
                               final repass = repassController.text.trim();
 
+                              if (name.isEmpty || email.isEmpty || pass.isEmpty || repass.isEmpty) {
+                                showMsg(context, "Please fill in all fields!");
+                                return;
+                              }
+                              final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                              if (!emailRegex.hasMatch(email)) {
+                                showMsg(context, "Please enter a valid email!");
+                                return;
+                              }
+                              if (pass.length < 6) {
+                                showMsg(context, "Password must be at least 6 characters!");
+                                return;
+                              }
                               if (pass != repass) {
                                 showMsg(context, "Passwords do not match!");
                                 return;

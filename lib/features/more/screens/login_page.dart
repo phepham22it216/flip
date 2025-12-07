@@ -124,6 +124,20 @@ class LoginScreen extends StatelessWidget {
                               final email = emailController.text.trim();
                               final pass  = passController.text.trim();
 
+                              if (email.isEmpty || pass.isEmpty) {
+                                showMsg(context, "Please fill in all fields!");
+                                return;
+                              }
+                              final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                              if (!emailRegex.hasMatch(email)) {
+                                showMsg(context, "Please enter a valid email!");
+                                return;
+                              }
+                              if (pass.length < 6) {
+                                showMsg(context, "Password must be at least 6 characters!");
+                                return;
+                              }
+
                               try {
                                 await AuthService().loginWithEmail(
                                   email: email,

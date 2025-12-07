@@ -8,12 +8,19 @@ import 'package:flip/features/team/screens/team_page.dart';
 import 'package:flip/features/more/screens/more_page.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flip/features/more/screens/login_page.dart';
+import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-void main() {
-  initializeDateFormatting('vi_VN', null).then((_) {
-    runApp(const MyApp());
-  });
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await initializeDateFormatting('vi_VN', null);
+
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
