@@ -51,6 +51,7 @@ class DefaultFirebaseOptions {
     authDomain: 'flip-66d56.firebaseapp.com',
     storageBucket: 'flip-66d56.firebasestorage.app',
     measurementId: 'G-3TTKT1D0Q9',
+    databaseURL: 'https://flip-66d56-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -59,6 +60,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '639479435926',
     projectId: 'flip-66d56',
     storageBucket: 'flip-66d56.firebasestorage.app',
+    databaseURL: 'https://flip-66d56-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

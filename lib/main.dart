@@ -8,11 +8,24 @@ import 'package:flip/features/team/screens/team_page.dart';
 import 'package:flip/features/more/screens/more_page.dart';
 import 'package:flip/features/tasks/screens/task_create_page.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flip/features/more/screens/login_page.dart';
+import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flip/features/more/services/auth_service.dart';
 
-void main() {
-  initializeDateFormatting('vi_VN', null).then((_) {
-    runApp(const MyApp());
-  });
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Khởi tạo GoogleSignIn
+  initGoogleSignIn(); // gọi từ auth_service.dart
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await initializeDateFormatting('vi_VN', null);
+
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -33,7 +46,7 @@ class MyApp extends StatelessWidget {
         ),
         fontFamily: 'Roboto',
       ),
-      home: const MainScreen(),
+      home: LoginScreen(),
     );
   }
 }
