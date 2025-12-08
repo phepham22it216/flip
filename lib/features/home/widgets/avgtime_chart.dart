@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import '../models/chart_model.dart';
+import '../services/avgtimechart_service.dart';
 
 class AvgTimeChart extends StatefulWidget {
   final DateTime? startDate;
@@ -20,6 +21,7 @@ class AvgTimeChart extends StatefulWidget {
 
 class _AvgTimeChartState extends State<AvgTimeChart>
     with SingleTickerProviderStateMixin {
+  final AvgTimeChartService _service = AvgTimeChartService();
 
   // Mốc thời gian tương ứng 6 mục
   final List<String> categories = [
@@ -34,15 +36,46 @@ class _AvgTimeChartState extends State<AvgTimeChart>
   // chứa index đang mở, null nếu đóng hết
   int? expandedIndex;
 
-  // Sample task (bạn sẽ thay bằng task thực sau)
-  final Map<String, List<String>> tasksByCategory = {
-    '<10 phút': ["Uống thuốc", "Gửi email ngắn"],
-    '10-30 phút': ["Dọn bàn làm việc", "Đi chợ mini"],
-    '30 phút-1 tiếng': ["Làm báo cáo A"],
-    '1-3 tiếng': ["Hoàn thành module Flutter"],
-    '>3 tiếng': ["Phát triển tính năng lớn"],
-    'Chưa hoàn thành': ["Task B", "Task C", "Task D"]
-  };
+  // dữ liệu động (thay cho sample)
+  Map<String, List<String>> tasksByCategory = {};
+  List<ChartData> chartData = [];
+  Map<String, double> taskDurations = {};
+
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // load dữ liệu khi widget khởi tạo
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _loading = true);
+
+    // Nếu widget.startDate/endDate là null thì service sẽ set mặc định ngày nguyên hôm nay
+    final res = await _service.calculateAvgTimeData(
+      startDate: widget.startDate,
+      endDate: widget.endDate,
+    );
+
+    // Lưu data
+    setState(() {
+      chartData = res.chartData;
+      tasksByCategory = res.tasksByCategory;
+      taskDurations = res.taskDurations;
+      _loading = false;
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant AvgTimeChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Nếu user thay đổi ngày ở parent thì reload data
+    if (oldWidget.startDate != widget.startDate || oldWidget.endDate != widget.endDate) {
+      _loadData();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +88,6 @@ class _AvgTimeChartState extends State<AvgTimeChart>
         child: Column(
           children: [
 
-            // ========================== HÀNG 1 =============================
             const Text(
               "Thời gian hoàn thành",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -63,55 +95,68 @@ class _AvgTimeChartState extends State<AvgTimeChart>
 
             const SizedBox(height: 16),
 
-            // ========================== HÀNG 2 =============================
-            // ========================== HÀNG 2.1: BIỂU ĐỒ =============================
-            SizedBox(
+            // BIỂU ĐỒ + LEGEND
+            _loading
+                ? const SizedBox(
               width: 220,
               height: 220,
-              child: SfCircularChart(
+              child: Center(child: CircularProgressIndicator()),
+            )
+                : SizedBox(
+              width: 220,
+              height: 220,
+              child: chartData.isEmpty
+                  ? SfCircularChart(
+                // Không có dữ liệu -> vẽ 1 vòng tròn nhạt hoặc để trống
+                series: <CircularSeries<dynamic, String>>[],
+              )
+                  : SfCircularChart(
                 legend: Legend(isVisible: false),
                 series: <PieSeries<ChartData, String>>[
                   PieSeries<ChartData, String>(
-                    dataSource: [
-                      ChartData('<10p', 20, Colors.green),
-                      ChartData('10-30p', 15, Colors.yellow),
-                      ChartData('30p-1h', 10, Colors.orange),
-                      ChartData('1-3h', 8, Colors.red),
-                      ChartData('>3h', 4, Colors.purple),
-                      ChartData('Chưa xong', 25, Colors.grey),
-                    ],
+                    dataSource: chartData,
                     xValueMapper: (d, _) => d.label,
                     yValueMapper: (d, _) => d.value,
                     pointColorMapper: (d, _) => d.color,
                     dataLabelSettings: const DataLabelSettings(isVisible: true),
-                  ),
+                    dataLabelMapper: (item, _) =>
+                    "${item.value.toStringAsFixed(1)}%",
+                  )
                 ],
               ),
             ),
 
             const SizedBox(height: 16),
 
-// ========================== HÀNG 2.2: LEGEND (WEB = 1 hàng, MOBILE = 2/1 hàng) =============================
+            // LEGEND responsive (web / mobile)
             LayoutBuilder(
               builder: (context, constraints) {
                 bool isWeb = constraints.maxWidth > 500;
+                final items = [
+                  LegendItem('<10 phút', Colors.green),
+                  LegendItem('10-30 phút', Colors.yellow),
+                  LegendItem('30 phút-1 tiếng', Colors.orange),
+                  LegendItem('1-3 tiếng', Colors.red),
+                  LegendItem('>3 tiếng', Colors.purple),
+                  LegendItem('Chưa hoàn thành', Colors.grey),
+                ];
 
                 return isWeb
                     ? Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: _buildLegendItems(),
+                  children: _buildLegendItems(items),
                 )
                     : Wrap(
                   spacing: 16,
                   runSpacing: 12,
-                  children: _buildLegendItems(),
+                  children: _buildLegendItems(items),
                 );
               },
             ),
 
             const SizedBox(height: 16),
 
-            // ========================== HÀNG 3: BẢNG =============================
+            // Bảng (animated)
             AnimatedSize(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
@@ -122,7 +167,6 @@ class _AvgTimeChartState extends State<AvgTimeChart>
 
             const SizedBox(height: 16),
 
-            // ========================== HÀNG 4 =============================
             const Text(
               "*Trung bình thời gian bạn hoàn thành công việc ngày hôm nay!",
               textAlign: TextAlign.center,
@@ -134,48 +178,34 @@ class _AvgTimeChartState extends State<AvgTimeChart>
     );
   }
 
-  // BUILD LEGEND LIST WITH TOGGLE
-  Widget _buildLegendList() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: List.generate(categories.length, (index) {
-        final label = categories[index];
-        final colors = [
-          Colors.green,
-          Colors.yellow,
-          Colors.orange,
-          Colors.red,
-          Colors.purple,
-          Colors.grey,
-        ];
+  List<Widget> _buildLegendItems(List<LegendItem> legendItems) {
+    return List.generate(legendItems.length, (index) {
+      final item = legendItems[index];
+      final label = item.label;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              Container(width: 16, height: 16, color: colors[index]),
-              const SizedBox(width: 8),
-              Expanded(child: Text(label)),
-              IconButton(
-                icon: Icon(
-                  expandedIndex == index
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
-                ),
-                onPressed: () {
-                  setState(() {
-                    expandedIndex = (expandedIndex == index) ? null : index;
-                  });
-                },
-              )
-            ],
-          ),
-        );
-      }),
-    );
+      return SizedBox(
+        width: 150,
+        child: Row(
+          children: [
+            Container(width: 16, height: 16, color: item.color),
+            const SizedBox(width: 8),
+            Expanded(child: Text(label)),
+            IconButton(
+              icon: Icon(
+                expandedIndex == index ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+              ),
+              onPressed: () {
+                setState(() {
+                  expandedIndex = expandedIndex == index ? null : index;
+                });
+              },
+            )
+          ],
+        ),
+      );
+    });
   }
 
-  // BẢNG HIỂN THỊ TASK
   Widget _buildTaskTable(String category) {
     final tasks = tasksByCategory[category] ?? [];
 
@@ -188,57 +218,29 @@ class _AvgTimeChartState extends State<AvgTimeChart>
             color: Colors.blue.shade50,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Text(
-            "Danh Sách Các Công Việc Liên Quan",
+          child: Text(
+            "Danh Sách Các Công Việc: $category (${tasks.length})",
             textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
         const SizedBox(height: 8),
 
-        ...tasks.map((task) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Text("- $task"),
-        )),
+        if (tasks.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text("Không có công việc trong mốc này."),
+          )
+        else
+          ...tasks.map((taskName) {
+            final duration = taskDurations[taskName];
+            final durText = duration != null ? " - ${duration.toStringAsFixed(0)} phút" : "";
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text("- $taskName$durText"),
+            );
+          }),
       ],
     );
-  }
-
-  List<Widget> _buildLegendItems() {
-    final colors = [
-      Colors.green,
-      Colors.yellow,
-      Colors.orange,
-      Colors.red,
-      Colors.purple,
-      Colors.grey,
-    ];
-
-    return List.generate(categories.length, (index) {
-      final label = categories[index];
-
-      return SizedBox(
-        width: 150, // để mobile xuống dòng đúng 2 item/hàng
-        child: Row(
-          children: [
-            Container(width: 16, height: 16, color: colors[index]),
-            const SizedBox(width: 8),
-            Expanded(child: Text(label)),
-            IconButton(
-              icon: Icon(
-                expandedIndex == index
-                    ? Icons.keyboard_arrow_up
-                    : Icons.keyboard_arrow_down,
-              ),
-              onPressed: () {
-                setState(() {
-                  expandedIndex = expandedIndex == index ? null : index;
-                });
-              },
-            )
-          ],
-        ),
-      );
-    });
   }
 }

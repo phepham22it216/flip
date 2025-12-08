@@ -1,51 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import '../models/chart_model.dart';
+import '../services/importantchart_service.dart';
 
 class ImportantChart extends StatelessWidget {
   final DateTime? startDate;
   final DateTime? endDate;
   final void Function(BuildContext, bool, int) onPickDate;
 
-  const ImportantChart({
+  final ImportantChartService _service = ImportantChartService();
+
+  ImportantChart({
     super.key,
     required this.startDate,
     required this.endDate,
     required this.onPickDate,
   });
 
+  String format(DateTime d) =>
+      "${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}";
+
   @override
   Widget build(BuildContext context) {
-    return _buildColumnChart(
-      context: context,
-      title: "- Mức Độ Quan Trọng -",
-      startDate: startDate,
-      endDate: endDate,
-      onPickDate: onPickDate,
-      chartIndex: 2,
-      data: [
-        ChartData('Thấp', 5, Colors.green),
-        ChartData('Trung bình', 8, Colors.orange),
-        ChartData('Cao', 3, Colors.red),
-      ],
-      legendItems: [
-        LegendItem('Thấp', Colors.green),
-        LegendItem('Trung bình', Colors.orange),
-        LegendItem('Cao', Colors.red),
-      ],
-    );
-  }
+    final today = DateTime.now();
+    final tomorrow = today.add(const Duration(days: 1));
 
-  Widget _buildColumnChart({
-    required BuildContext context,
-    required String title,
-    required DateTime? startDate,
-    required DateTime? endDate,
-    required void Function(BuildContext, bool, int) onPickDate,
-    required int chartIndex,
-    required List<ChartData> data,
-    required List<LegendItem> legendItems,
-  }) {
+    final sDate = startDate ?? today;
+    final eDate = endDate ?? tomorrow;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -55,41 +37,91 @@ class ImportantChart extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            "- Mức Độ Quan Trọng -",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+
           const SizedBox(height: 10),
+
+          // ⭐ Hàng chọn ngày
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildDateBtn(context, "Bắt đầu", () => onPickDate(context, true, chartIndex)),
+              _buildDateBtn(context, "Bắt đầu", () => onPickDate(context, true, 2)),
               const SizedBox(width: 10),
-              _buildDateBtn(context, "Kết thúc", () => onPickDate(context, false, chartIndex)),
+              _buildDateBtn(context, "Kết thúc", () => onPickDate(context, false, 2)),
             ],
           ),
+
+          const SizedBox(height: 8),
+
+          // ⭐ Hàng hiển thị ngày đã chọn
+          Text(
+            "~ ${format(sDate)} - ${format(eDate)} ~",
+            style: const TextStyle(fontSize: 10, fontStyle: FontStyle.italic),
+          ),
+
           const SizedBox(height: 10),
+
+          // ⭐ BIỂU ĐỒ
           SizedBox(
             height: 200,
-            child: SfCartesianChart(
-              primaryXAxis: CategoryAxis(),
-              primaryYAxis: NumericAxis(),
-              series: <CartesianSeries<ChartData, String>>[
-                ColumnSeries<ChartData, String>(
-                  dataSource: data,
-                  xValueMapper: (d, _) => d.label,
-                  yValueMapper: (d, _) => d.value,
-                  pointColorMapper: (d, _) => d.color,
-                  dataLabelSettings: const DataLabelSettings(
-                    isVisible: true,
-                    labelAlignment: ChartDataLabelAlignment.middle,
-                    textStyle: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )
-              ],
+            child: FutureBuilder<Map<String, int>>(
+              future: _service.calculatePriorityCount(
+                startDate: sDate,
+                endDate: eDate,
+              ),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final counts = snapshot.data!;
+                final low = counts["low"]!;
+                final medium = counts["medium"]!;
+                final high = counts["high"]!;
+
+                final hasData = (low + medium + high) > 0;
+
+                List<ChartData> data = [];
+                if (low > 0) data.add(ChartData('Thấp', low.toDouble(), Colors.green));
+                if (medium > 0) data.add(ChartData('Trung bình', medium.toDouble(), Colors.orange));
+                if (high > 0) data.add(ChartData('Cao', high.toDouble(), Colors.red));
+
+                return SfCartesianChart(
+                  primaryXAxis: CategoryAxis(),
+                  primaryYAxis: NumericAxis(),
+                  series: hasData
+                      ? <CartesianSeries<ChartData, String>>[
+                    ColumnSeries<ChartData, String>(
+                      dataSource: data,
+                      xValueMapper: (d, _) => d.label,
+                      yValueMapper: (d, _) => d.value,
+                      pointColorMapper: (d, _) => d.color,
+                      dataLabelSettings: const DataLabelSettings(
+                        isVisible: true,
+                        labelAlignment: ChartDataLabelAlignment.middle,
+                        textStyle: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
+                  ]
+                      : <CartesianSeries<ChartData, String>>[], // ⭐ Không có dữ liệu → trống
+                );
+              },
             ),
           ),
-          _buildLegend(legendItems),
+
+          const SizedBox(height: 8),
+
+          _buildLegend([
+            LegendItem('Thấp', Colors.green),
+            LegendItem('Trung bình', Colors.orange),
+            LegendItem('Cao', Colors.red),
+          ]),
         ],
       ),
     );
@@ -111,9 +143,7 @@ class ImportantChart extends StatelessWidget {
 
   Widget _buildLegend(List<LegendItem> items) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center, // căn trái
       children: [
-        // Hàng ghi chú màu
         Wrap(
           spacing: 20,
           runSpacing: 8,
@@ -129,16 +159,10 @@ class ImportantChart extends StatelessWidget {
             );
           }).toList(),
         ),
-
         const SizedBox(height: 6),
-
-        // 👉 Dòng mô tả thêm
         const Text(
           "*Số lượng công việc theo mức độ quan trọng!",
-          style: TextStyle(
-            fontStyle: FontStyle.italic,
-            fontSize: 12,
-          ),
+          style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
         ),
       ],
     );

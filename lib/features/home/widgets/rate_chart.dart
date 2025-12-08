@@ -1,51 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import '../models/chart_model.dart';
+import '../services/ratechart_service.dart';
 
 class RateChart extends StatelessWidget {
   final DateTime? startDate;
   final DateTime? endDate;
   final void Function(BuildContext, bool, int) onPickDate;
 
-  const RateChart({
+  final RateChartService _rateService = RateChartService();
+
+  RateChart({
     super.key,
     required this.startDate,
     required this.endDate,
     required this.onPickDate,
   });
 
+  String format(DateTime d) =>
+      "${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}";
+
   @override
   Widget build(BuildContext context) {
-    return _buildColumnChart(
-      context: context,
-      title: "- Mức Độ Khó -",
-      startDate: startDate,
-      endDate: endDate,
-      onPickDate: onPickDate,
-      chartIndex: 3,
-      data: [
-        ChartData('Dễ', 6, Colors.blue),
-        ChartData('Vừa', 4, Colors.purple),
-        ChartData('Khó', 2, Colors.black),
-      ],
-      legendItems: [
-        LegendItem('Dễ', Colors.blue),
-        LegendItem('Vừa', Colors.purple),
-        LegendItem('Khó', Colors.black),
-      ],
-    );
-  }
+    final today = DateTime.now();
+    final tomorrow = today.add(const Duration(days: 1));
 
-  Widget _buildColumnChart({
-    required BuildContext context,
-    required String title,
-    required DateTime? startDate,
-    required DateTime? endDate,
-    required void Function(BuildContext, bool, int) onPickDate,
-    required int chartIndex,
-    required List<ChartData> data,
-    required List<LegendItem> legendItems,
-  }) {
+    final sDate = startDate ?? today;
+    final eDate = endDate ?? tomorrow;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -55,47 +37,74 @@ class RateChart extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            "- Mức Độ Khó -",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 10),
+
+          // ⭐ Nút chọn ngày
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildDateBtn(context, "Bắt đầu", () => onPickDate(context, true, chartIndex)),
+              _buildDateBtn("Bắt đầu", () => onPickDate(context, true, 3)),
               const SizedBox(width: 10),
-              _buildDateBtn(context, "Kết thúc", () => onPickDate(context, false, chartIndex)),
+              _buildDateBtn("Kết thúc", () => onPickDate(context, false, 3)),
             ],
           ),
+
+          const SizedBox(height: 8),
+
+          // ⭐ Hiển thị ngày đã chọn
+          Text(
+            "~ ${format(sDate)} - ${format(eDate)} ~",
+            style: const TextStyle(fontSize: 10, fontStyle: FontStyle.italic),
+          ),
+
           const SizedBox(height: 10),
+
           SizedBox(
             height: 200,
-            child: SfCartesianChart(
-              primaryXAxis: CategoryAxis(),
-              primaryYAxis: NumericAxis(),
-              series: <CartesianSeries<ChartData, String>>[
-                ColumnSeries<ChartData, String>(
-                  dataSource: data,
-                  xValueMapper: (d, _) => d.label,
-                  yValueMapper: (d, _) => d.value,
-                  pointColorMapper: (d, _) => d.color,
-                  dataLabelSettings: const DataLabelSettings(
-                    isVisible: true,
-                    labelAlignment: ChartDataLabelAlignment.middle,
-                    textStyle: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )
-              ],
+            child: FutureBuilder<List<ChartData>>(
+              future: _rateService.calculateDifficultyCount(
+                startDate: sDate,
+                endDate: eDate,
+              ),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final data = snapshot.data!;
+
+                return SfCartesianChart(
+                  primaryXAxis: CategoryAxis(),
+                  primaryYAxis: NumericAxis(),
+                  series: [
+                    ColumnSeries<ChartData, String>(
+                      dataSource: data,   // có thể rỗng!
+                      xValueMapper: (d, _) => d.label,
+                      yValueMapper: (d, _) => d.value,
+                      pointColorMapper: (d, _) => d.color,
+                      dataLabelSettings: const DataLabelSettings(
+                        isVisible: true,
+                        labelAlignment: ChartDataLabelAlignment.middle,
+                      ),
+                    )
+                  ],
+                );
+              },
             ),
           ),
-          _buildLegend(legendItems),
+
+          _buildLegend(),
         ],
       ),
     );
   }
 
-  Widget _buildDateBtn(BuildContext context, String text, VoidCallback onTap) {
+  // Nút chọn ngày
+  Widget _buildDateBtn(String text, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -109,16 +118,19 @@ class RateChart extends StatelessWidget {
     );
   }
 
-  Widget _buildLegend(List<LegendItem> items) {
+  // Legend
+  Widget _buildLegend() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // căn trái
       children: [
-        // Hàng ghi chú màu
         Wrap(
           spacing: 20,
           runSpacing: 8,
-          alignment: WrapAlignment.start,
-          children: items.map((item) {
+          alignment: WrapAlignment.center,
+          children: [
+            LegendItem("Dễ", Colors.blue),
+            LegendItem("Vừa", Colors.purple),
+            LegendItem("Khó", Colors.black),
+          ].map((item) {
             return Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -129,18 +141,11 @@ class RateChart extends StatelessWidget {
             );
           }).toList(),
         ),
-
         const SizedBox(height: 6),
-
-        // 👉 Dòng mô tả thêm
         const Text(
           "*Số lượng công việc theo mức độ khó!",
-          style: TextStyle(
-            fontStyle: FontStyle.italic,
-            fontSize: 12,
-            color: Colors.black87, // tuỳ chọn, có thể bỏ
-          ),
-        ),
+          style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+        )
       ],
     );
   }

@@ -1,26 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import '../models/chart_model.dart';
+import '../services/statuschart_service.dart';
 
 class StatusChart extends StatelessWidget {
   final DateTime? startDate;
   final DateTime? endDate;
   final void Function(BuildContext, bool, int) onPickDate;
 
-  const StatusChart({
+  final StatusChartService _statusService = StatusChartService();
+
+  StatusChart({
     super.key,
     required this.startDate,
     required this.endDate,
     required this.onPickDate,
   });
 
+  String format(DateTime d) =>
+      "${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}";
+
   @override
   Widget build(BuildContext context) {
+    final today = DateTime.now();
+    final tomorrow = today.add(const Duration(days: 1));
+
+    final sDate = startDate ?? today;
+    final eDate = endDate ?? tomorrow;
+
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -29,7 +39,7 @@ class StatusChart extends StatelessWidget {
           children: [
             const SizedBox(height: 10),
 
-            // ⭐ Nút chọn ngày — nằm trên đầu biểu đồ
+            // ⭐ Hàng chọn ngày
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -39,39 +49,57 @@ class StatusChart extends StatelessWidget {
               ],
             ),
 
-            //const SizedBox(height: 10),
+            const SizedBox(height: 8),
 
-            // ⭐ 2 bên: biểu đồ + legend
+            // ⭐ Hàng hiển thị ngày đã chọn
+            Text(
+              "~ ${format(sDate)} - ${format(eDate)} ~",
+              style: const TextStyle(fontSize: 10, fontStyle: FontStyle.italic),
+            ),
+
+            // ⭐ BIỂU ĐỒ + LEGEND
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(
                   width: 220,
                   height: 220,
-                  child: SfCircularChart(
-                    legend: Legend(isVisible: false),
-                    series: <PieSeries<ChartData, String>>[
-                      PieSeries<ChartData, String>(
-                        dataSource: [
-                          ChartData('Done', 40, Colors.green),
-                          ChartData('Pending', 30, Colors.orange),
-                          ChartData('Overdue', 30, Colors.red),
+                  child: FutureBuilder<List<ChartData>>(
+                    future: _statusService.calculateStatusPercent(
+                      startDate: sDate,
+                      endDate: eDate,
+                    ),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      final data = snapshot.data!;
+
+                      return SfCircularChart(
+                        legend: Legend(isVisible: false),
+                        series: [
+                          PieSeries<ChartData, String>(
+                            dataSource: data,
+                            xValueMapper: (item, _) => item.label,
+                            yValueMapper: (item, _) => item.value,
+                            pointColorMapper: (item, _) => item.color,
+                            dataLabelSettings: const DataLabelSettings(isVisible: true),
+                            dataLabelMapper: (item, _) => item.showLabel
+                                ? "${item.value.toStringAsFixed(1)}%" // hoặc 2
+                                : "",
+                          )
                         ],
-                        xValueMapper: (data, _) => data.label,
-                        yValueMapper: (data, _) => data.value,
-                        pointColorMapper: (data, _) => data.color,
-                        dataLabelSettings: const DataLabelSettings(isVisible: true),
-                      )
-                    ],
+                      );
+                    },
                   ),
                 ),
-
-                //const SizedBox(width: 2),
 
                 _buildLegend([
                   LegendItem("Hoàn thành", Colors.green),
                   LegendItem("Chưa xong", Colors.orange),
                   LegendItem("Quá hạn", Colors.red),
+                  LegendItem("Không có", Colors.grey),
                 ]),
               ],
             ),
@@ -95,7 +123,6 @@ class StatusChart extends StatelessWidget {
     );
   }
 
-  // ⭐ Legend nằm dọc nhưng nhỏ gọn và đặt cạnh biểu đồ
   Widget _buildLegend(List<LegendItem> items) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,3 +141,4 @@ class StatusChart extends StatelessWidget {
     );
   }
 }
+

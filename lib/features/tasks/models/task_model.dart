@@ -257,4 +257,10 @@ class TaskModel {
   String _getQuadrantFromColor() {
     return TaskConstants.getQuadrantFromColor(color);
   }
+
+  /// Lấy status trực tiếp từ task (inProgress / completed / pending)
+  String get status {
+    return isDone ? TaskConstants.statusCompleted : TaskConstants.statusInProgress;
+  }
+
 }
