@@ -18,6 +18,7 @@ class _AccountPageState extends State<AccountPage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
 
+  String hash = "";
   String passwordMasked = "********"; // hiển thị pass dạng *******
   String avatarUrl = ""; // url avatar từ Firebase/Cloudinary
 
@@ -38,8 +39,10 @@ class _AccountPageState extends State<AccountPage> {
     if (user != null) {
       setState(() {
         nameController.text = user.fullName ?? "";
-        emailController.text = user.email ?? "";
+        emailController.text = maskEmail(user.email);
         passwordMasked = "********"; // luôn ẩn mật khẩu
+        hash = user.passwordHash ?? "";;
+        print("Real password hash 1 = $hash");
         avatarUrl = (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
             ? user.avatarUrl!
             : "assets/images/account.png";
@@ -110,23 +113,151 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
+  String maskEmail(String email) {
+    final atIndex = email.indexOf("@");
+    if (atIndex == -1) return email; // fallback
+
+    final firstFive = email.substring(0, email.length < 5 ? email.length : 5);
+    final domain = email.substring(atIndex);
+
+    return "$firstFive***$domain";
+  }
+
+  Future<String?> _askPasswordDialog() async {
+    final controller = TextEditingController();
+    bool obscure = true; // chỉ thêm biến UI, không thay đổi logic
+
+    return await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) => Dialog(
+            backgroundColor: const Color(0xFF90CAF9),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.85,
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Enter your Password",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // ================= TEXTFIELD PASSWORD ================
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: TextField(
+                      controller: controller,
+                      obscureText: obscure,
+                      decoration: InputDecoration(
+                        labelText: "Current password",
+                        border: InputBorder.none,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscure ? Icons.visibility_off : Icons.visibility,
+                          ),
+                          onPressed: () =>
+                              setState(() => obscure = !obscure),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // ================= BUTTONS =================
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFE0E0E0),
+                        ),
+                        onPressed: () => Navigator.pop(context, null),
+                        child: const Text(
+                          "Cancel",
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFC8E6C9),
+                        ),
+                        onPressed: () =>
+                            Navigator.pop(context, controller.text.trim()),
+                        child: const Text(
+                          "Confirm",
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _saveEmail() async {
-    final email = emailController.text.trim();
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (email.isEmpty) {
+    final newEmail = emailController.text.trim();
+    final user = await AuthService().currentUser();
+
+    if (newEmail.isEmpty) {
       showMsg("Email cannot be empty!");
       return;
     }
-    if (!emailRegex.hasMatch(email)) {
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(newEmail)) {
       showMsg("Email is invalid!");
       return;
     }
+
+    if (user == null) {
+      showMsg("User not found!");
+      return;
+    }
+
+    // YÊU CẦU MẬT KHẨU ĐỂ XÁC THỰC
+    final oldPassword = await _askPasswordDialog();
+    if (oldPassword == null) return;
+
     try {
-      await AuthService().updateEmail(email);
-      showMsg("Email updated!");
-      setState(() {
-        isEditingEmail = false;
-      });
+      final result = await AuthService().updateEmail(
+        newEmail,
+        user.email,      // email hiện tại
+        oldPassword,     // mật khẩu xác thực
+      );
+
+      if (result == "VERIFY_EMAIL_SENT") {
+        showMsg("A verification email has been sent to $newEmail. Please confirm!");
+        setState(() {
+          isEditingEmail = false;
+          emailController.text = maskEmail(newEmail);
+        });
+      } else {
+        showMsg("Failed to update email!");
+      }
     } catch (e) {
       showMsg(e.toString());
     }
@@ -137,71 +268,161 @@ class _AccountPageState extends State<AccountPage> {
     final newPassController = TextEditingController();
     final rePassController = TextEditingController();
 
+    bool obscureOld = true;
+    bool obscureNew = true;
+    bool obscureRe = true;
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Change Password"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: oldPassController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: "Old Password",
-              ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => Dialog(
+          backgroundColor: const Color(0xFF90CAF9), // blue đậm hơn nền 30%
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.85,
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Change Password",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 15),
+
+                // ========== OLD PASSWORD ==========
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: TextField(
+                    controller: oldPassController,
+                    obscureText: obscureOld,
+                    decoration: InputDecoration(
+                      labelText: "Old Password",
+                      border: InputBorder.none,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                            obscureOld ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () =>
+                            setState(() => obscureOld = !obscureOld),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // ========== NEW PASSWORD ==========
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: TextField(
+                    controller: newPassController,
+                    obscureText: obscureNew,
+                    decoration: InputDecoration(
+                      labelText: "New Password",
+                      border: InputBorder.none,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                            obscureNew ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () =>
+                            setState(() => obscureNew = !obscureNew),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // ========== CONFIRM NEW PASSWORD ==========
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: TextField(
+                    controller: rePassController,
+                    obscureText: obscureRe,
+                    decoration: InputDecoration(
+                      labelText: "Confirm New Password",
+                      border: InputBorder.none,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                            obscureRe ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () =>
+                            setState(() => obscureRe = !obscureRe),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(0xFFE0E0E0),
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                      child:
+                      const Text("Cancel", style: TextStyle(color: Colors.black)),
+                    ),
+                    const SizedBox(width: 10),
+
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(0xFFC8E6C9),
+                      ),
+                      onPressed: () async {
+                        final oldPass = oldPassController.text.trim();
+                        final newPass = newPassController.text.trim();
+                        final rePass = rePassController.text.trim();
+
+                        if (oldPass.isEmpty || newPass.isEmpty || rePass.isEmpty) {
+                          showMsg("Please fill in all fields!");
+                          return;
+                        }
+                        if (newPass.length < 6) {
+                          showMsg("New password must be at least 6 characters!");
+                          return;
+                        }
+                        if (newPass != rePass) {
+                          showMsg("Passwords do not match!");
+                          return;
+                        }
+
+                        try {
+                          await AuthService().updatePassword(oldPass, newPass);
+                          showMsg("Password updated!");
+                          Navigator.pop(ctx);
+                        } catch (e) {
+                          showMsg(e.toString());
+                        }
+                      },
+                      child:
+                      const Text("Save", style: TextStyle(color: Colors.black)),
+                    ),
+                  ],
+                )
+              ],
             ),
-            TextField(
-              controller: newPassController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: "New Password",
-              ),
-            ),
-            TextField(
-              controller: rePassController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: "Confirm New Password",
-              ),
-            ),
-          ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final oldPass = oldPassController.text.trim();
-              final newPass = newPassController.text.trim();
-              final rePass = rePassController.text.trim();
-
-              if (oldPass.isEmpty || newPass.isEmpty || rePass.isEmpty) {
-                showMsg("Please fill in all fields!");
-                return;
-              }
-              if (newPass.length < 6) {
-                showMsg("New password must be at least 6 characters!");
-                return;
-              }
-              if (newPass != rePass) {
-                showMsg("Passwords do not match!");
-                return;
-              }
-
-              try {
-                await AuthService().updatePassword(oldPass, newPass);
-                showMsg("Password updated!");
-                Navigator.pop(ctx);
-              } catch (e) {
-                showMsg(e.toString());
-              }
-            },
-            child: const Text("Save"),
-          ),
-        ],
       ),
     );
   }
@@ -265,7 +486,7 @@ class _AccountPageState extends State<AccountPage> {
                               ? FileImage(_localImage!)
                               : (avatarUrl.isNotEmpty
                               ? NetworkImage(avatarUrl) as ImageProvider
-                              : const AssetImage("assets/images/avatar_placeholder.png")),
+                              : const AssetImage("assets/images/account.png")),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -316,7 +537,20 @@ class _AccountPageState extends State<AccountPage> {
                     iconColor: Colors.red.shade600,
                     controller: emailController,
                     isEditing: isEditingEmail,
-                    onTapEdit: () => setState(() => isEditingEmail = true),
+                    onTapEdit: () {
+                      if (hash.isEmpty) {
+                        showMsg("Google accounts cannot change email!");
+                        return;
+                      }
+                      AuthService().currentUser().then((user) {
+                        if (user != null) {
+                          setState(() {
+                            emailController.text = user.email ?? "";
+                            isEditingEmail = true;
+                          });
+                        }
+                      });
+                    },
                     onSave: _saveEmail,
                   ),
 
@@ -329,7 +563,17 @@ class _AccountPageState extends State<AccountPage> {
                     controller: TextEditingController(text: passwordMasked),
                     isPassword: true,
                     isEditing: false,
-                    onTapEdit: _changePassword,
+                    onTapEdit: () {
+                      print("Real password hash = '$hash'");
+
+                      // nếu hash rỗng → không có password
+                      if (hash.isEmpty || hash.trim().isEmpty) {
+                        showMsg("Your account does not have a password. Cannot change password!");
+                        return;
+                      }
+
+                      _changePassword(); // OK
+                    },
                   ),
                 ],
               ),

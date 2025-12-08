@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:bcrypt/bcrypt.dart';
 import '../models/user_model.dart';
+import 'cloudinary_service.dart';
 import 'user_database_service.dart';
 
 class AuthService {
@@ -125,6 +126,14 @@ class AuthService {
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
+
+        if (firebaseUser.photoURL != null && firebaseUser.photoURL!.isNotEmpty) {
+          final cloudUrl = await CloudinaryService().uploadNetworkImage(firebaseUser.photoURL!);
+          if (cloudUrl != null) {
+            user.avatarUrl = cloudUrl;     // cập nhật avatar thành ảnh Cloudinary
+          }
+        }
+
         await _db.saveUser(user);
       }
 
@@ -169,24 +178,43 @@ class AuthService {
     await _db.updateUser(user.uid, userModel.toMap());
   }
 
-  // ------------------------------
-  // UPDATE MAIL
-  // ------------------------------
-  Future<void> updateEmail(String newEmail) async {
+  Future<String> updateEmail(String newEmail, String currentEmail, String password) async {
     final user = _auth.currentUser;
-    if (user == null) throw "No user logged in";
+    if (user == null) return "NO_USER";
 
-    // Firebase update email
-    await user.verifyBeforeUpdateEmail(newEmail);
-    await user.reload();
+    try {
+      // Re-authenticate
+      final cred = EmailAuthProvider.credential(
+        email: currentEmail,
+        password: password,
+      );
 
-    // Update Realtime DB
+      await user.reauthenticateWithCredential(cred);
+
+      // Gửi email xác nhận đổi email
+      await user.verifyBeforeUpdateEmail(newEmail);
+
+      return "VERIFY_EMAIL_SENT";
+    } catch (e) {
+      print("❌ Update email error: $e");
+      return "ERROR";
+    }
+  }
+
+  Future<void> syncEmailFromFirebase() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final realEmail = user.email; // email thực sự đã đổi
+
     final userModel = await _db.getUser(user.uid);
-    if (userModel == null) throw "User not found";
+    if (userModel == null) return;
 
-    userModel.email = newEmail;
-    userModel.updatedAt = DateTime.now();
-    await _db.updateUser(user.uid, userModel.toMap());
+    if (userModel.email != realEmail) {
+      userModel.email = realEmail!;
+      userModel.updatedAt = DateTime.now();
+      await _db.updateUser(user.uid, userModel.toMap());
+    }
   }
 
   // ------------------------------

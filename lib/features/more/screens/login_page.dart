@@ -166,6 +166,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                   return; // Không chuyển hướng
                                 }
 
+                                // Đồng bộ email thật từ Firebase về Database
+                                await AuthService().syncEmailFromFirebase();
+
+                                // Get lại user sau sync
+                                final updatedUser = await AuthService().currentUser();
+
+                                print("🔥 LOGGED IN USER:");
+                                print("Name: ${updatedUser?.fullName}");
+                                print("Email: ${updatedUser?.email}");
+
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(

@@ -48,6 +48,25 @@ class CloudinaryService {
       return null;
     }
   }
+
+  // 👉 Upload ảnh từ URL (Google avatar)
+  Future<String?> uploadNetworkImage(String imageUrl) async {
+    try {
+      final response = await http.get(Uri.parse(imageUrl));
+
+      if (response.statusCode == 200) {
+        final bytes = response.bodyBytes;
+
+        return await uploadBytes(bytes, "google_avatar.jpg");
+      } else {
+        print("❌ Failed to download image: ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      print("❌ Error downloading image: $e");
+      return null;
+    }
+  }
 }
 
 class AvatarService {
