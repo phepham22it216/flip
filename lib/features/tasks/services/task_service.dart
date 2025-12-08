@@ -14,9 +14,9 @@ class TaskService {
     return FirebaseDatabase.instance.ref("users/$userId/tasks");
   }
 
-  /// Lấy tasks của user theo creatorId (chỉ activity = true)
+  /// Lấy tasks của user theo userId (chỉ activity = true)
   Stream<List<TaskModel>> getTasksByUserId(String userId) {
-    return _tasksRef.orderByChild('creatorId').equalTo(userId).onValue.map((
+    return _tasksRef.orderByChild('userId').equalTo(userId).onValue.map((
       event,
     ) {
       final List<TaskModel> tasks = [];
@@ -64,7 +64,7 @@ class TaskService {
     final newRef = _tasksRef.push();
     final data = task.toMap();
 
-    data['creatorId'] = user.uid;
+    data['userId'] = user.uid;
     // Khi tạo mới, luôn set matrixQuadrant là ELIMINATE (không khẩn cấp, không quan trọng)
     data['matrixQuadrant'] = TaskConstants.defaultQuadrant;
     if (groupId != null) {
