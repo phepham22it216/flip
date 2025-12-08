@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flip/features/tasks/models/task_item.dart';
-import 'package:flip/features/tasks/widgets/task_list/task_detail_modal.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
+import 'package:flip/features/tasks/screens/task_detail_page.dart';
 
 class WeekTimeTable extends StatelessWidget {
   final DateTime weekStart;
-  final List<TaskItem> tasks;
+  final List<TaskModel> tasks;
   final List<int> hours;
 
   const WeekTimeTable({

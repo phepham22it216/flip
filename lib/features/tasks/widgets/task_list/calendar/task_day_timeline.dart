@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'package:flip/features/tasks/models/task_item.dart';
-import 'package:flip/features/tasks/widgets/task_list/task_detail_modal.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
+import 'package:flip/features/tasks/screens/task_detail_page.dart';
 
 class TaskDayTimeline extends StatelessWidget {
   final DateTime day;
-  final List<TaskItem> tasks;
+  final List<TaskModel> tasks;
 
   const TaskDayTimeline({super.key, required this.day, required this.tasks});
 
   @override
   Widget build(BuildContext context) {
     // group task theo từng giờ (0-23)
-    final Map<int, List<TaskItem>> tasksByHour = {
+    final Map<int, List<TaskModel>> tasksByHour = {
       for (var h = 0; h < 24; h++) h: [],
     };
     for (final t in tasks) {

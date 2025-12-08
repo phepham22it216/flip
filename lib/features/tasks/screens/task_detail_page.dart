@@ -1,237 +1,598 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
+import 'package:flip/features/tasks/services/task_service.dart';
+import 'package:flip/features/tasks/screens/task_edit_page.dart';
 import 'package:flip/theme/app_colors.dart';
-import 'package:flip/features/tasks/widgets/task_detail/detail_tile.dart';
-import 'package:flip/features/tasks/widgets/task_detail/time_range_card.dart';
-import 'package:flip/features/tasks/widgets/task_detail/task_helpers.dart';
 
 enum _TaskMenuAction { complete, edit, delete }
 
-class TaskDetailPage extends StatelessWidget {
-  final TaskItem task;
+class TaskDetailModal extends StatefulWidget {
+  final TaskModel task;
 
-  const TaskDetailPage({super.key, required this.task});
+  const TaskDetailModal({Key? key, required this.task}) : super(key: key);
+
+  @override
+  State<TaskDetailModal> createState() => _TaskDetailModalState();
+}
+
+class _TaskDetailModalState extends State<TaskDetailModal>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+  final TaskService _taskService = TaskService();
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
+
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   String _formatDateTime(DateTime dt) {
     final date = DateFormat('EEE, dd MMM yyyy', 'vi_VN').format(dt);
     final time = DateFormat('HH:mm').format(dt);
-    return '$date  ·  $time';
+    return '$date · $time';
   }
 
-  void _onMenuSelected(BuildContext context, _TaskMenuAction action) {
-    final label = switch (action) {
-      _TaskMenuAction.complete => 'Hoàn thành nhiệm vụ này',
-      _TaskMenuAction.edit => 'Chỉnh sửa',
-      _TaskMenuAction.delete => 'Xóa',
-    };
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(label)));
+  void _onMenuSelected(BuildContext context, _TaskMenuAction action) async {
+    switch (action) {
+      case _TaskMenuAction.complete:
+        await _handleCompleteTask(context);
+        break;
+      case _TaskMenuAction.edit:
+        await _handleEditTask(context);
+        break;
+      case _TaskMenuAction.delete:
+        await _handleDeleteTask(context);
+        break;
+    }
   }
 
-  void _showActionSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _ActionRow(
-                label: 'Hoàn thành nhiệm vụ này',
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _onMenuSelected(context, _TaskMenuAction.complete);
-                },
-              ),
-              const Divider(height: 1),
-              _ActionRow(
-                label: 'Chỉnh sửa',
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _onMenuSelected(context, _TaskMenuAction.edit);
-                },
-              ),
-              const Divider(height: 1),
-              _ActionRow(
-                label: 'Xóa',
-                isDestructive: true,
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _onMenuSelected(context, _TaskMenuAction.delete);
-                },
-              ),
-            ],
-          ),
-        );
-      },
+  Future<void> _handleCompleteTask(BuildContext context) async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Vui lòng đăng nhập')));
+        }
+        return;
+      }
+
+      await _taskService.completeTask(userId, widget.task.id);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Đã hoàn thành nhiệm vụ')));
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+      }
+    }
+  }
+
+  Future<void> _handleEditTask(BuildContext context) async {
+    Navigator.of(context).pop();
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => TaskEditPage(task: widget.task)),
     );
+  }
+
+  Future<void> _handleDeleteTask(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content: const Text('Bạn có chắc chắn muốn xóa nhiệm vụ này không?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        final userId = FirebaseAuth.instance.currentUser?.uid;
+        if (userId == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Vui lòng đăng nhập')));
+          }
+          return;
+        }
+
+        await _taskService.deleteTaskForUser(userId, widget.task.id);
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Đã xóa nhiệm vụ')));
+          Navigator.of(context).pop();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+        }
+      }
+    }
+  }
+
+  void _showPopoverMenu(BuildContext buttonContext) {
+    final RenderBox button = buttonContext.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Overlay.of(buttonContext).context.findRenderObject() as RenderBox;
+    final buttonRect =
+        button.localToGlobal(Offset.zero, ancestor: overlay) & button.size;
+
+    final position = RelativeRect.fromLTRB(
+      buttonRect.left,
+      buttonRect.bottom + 4,
+      overlay.size.width - buttonRect.left - buttonRect.width,
+      overlay.size.height - buttonRect.bottom,
+    );
+
+    showMenu<_TaskMenuAction>(
+      context: buttonContext,
+      position: position,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      constraints: const BoxConstraints(minWidth: 0),
+      items: [
+        const PopupMenuItem(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          value: _TaskMenuAction.complete,
+          child: Text('Hoàn thành nhiệm vụ'),
+        ),
+        const PopupMenuItem(
+          enabled: false,
+          height: 1,
+          padding: EdgeInsets.zero,
+          child: Divider(height: 1, thickness: 1, color: Color(0xFFD0C4B5)),
+        ),
+        const PopupMenuItem(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          value: _TaskMenuAction.edit,
+          child: Text('Chỉnh sửa'),
+        ),
+        const PopupMenuItem(
+          enabled: false,
+          height: 1,
+          padding: EdgeInsets.zero,
+          child: Divider(height: 1, thickness: 1, color: Color(0xFFD0C4B5)),
+        ),
+        const PopupMenuItem(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          value: _TaskMenuAction.delete,
+          child: Text('Xóa', style: TextStyle(color: Colors.red)),
+        ),
+      ],
+    ).then((value) {
+      if (value != null) _onMenuSelected(buttonContext, value);
+    });
+  }
+
+  String _priorityText(int p) {
+    switch (p) {
+      case 1:
+        return 'Thấp';
+      case 2:
+        return 'Trung bình';
+      case 3:
+        return 'Cao';
+      default:
+        return 'Không xác định';
+    }
+  }
+
+  Color _priorityColor(int p) {
+    switch (p) {
+      case 1:
+        return AppColors.xanh2;
+      case 2:
+        return AppColors.vang;
+      case 3:
+        return AppColors.doSoft;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _difficultyText(int d) {
+    switch (d) {
+      case 1:
+        return 'Dễ';
+      case 2:
+        return 'Trung bình';
+      case 3:
+        return 'Khó';
+      default:
+        return 'Không xác định';
+    }
+  }
+
+  Color _difficultyColor(int d) {
+    switch (d) {
+      case 1:
+        return AppColors.xanhLa1;
+      case 2:
+        return AppColors.vang;
+      case 3:
+        return AppColors.doSoft;
+      default:
+        return Colors.grey;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final start = _formatDateTime(task.startTime);
-    final end = _formatDateTime(task.endTime);
+    final start = _formatDateTime(widget.task.startTime);
+    final end = _formatDateTime(widget.task.endTime);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leadingWidth: 110,
-        title: Text(
-          task.title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-            color: AppColors.textPrimary,
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
           ),
-        ),
-        centerTitle: true,
-        leading: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios_rounded,
-                color: AppColors.textPrimary,
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
-            IconButton(
-              tooltip: 'Tùy chọn',
-              icon: const Icon(
-                Icons.more_horiz_rounded,
-                color: AppColors.xanhLa1,
-              ),
-              onPressed: () => _showActionSheet(context),
-            ),
-          ],
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Card thời gian
-            TimeRangeCard(startTime: start, endTime: end),
-
-            const SizedBox(height: 24),
-
-            // Mức độ quan trọng
-            DetailTile(
-              icon: Icons.flag_rounded,
-              iconColor: TaskHelpers.priorityColor(task.priority),
-              title: 'Mức độ quan trọng',
-              value: TaskHelpers.priorityText(task.priority),
-            ),
-
-            // Độ khó
-            DetailTile(
-              icon: Icons.flash_on_rounded,
-              iconColor: TaskHelpers.difficultyColor(task.difficulty),
-              title: 'Độ khó',
-              value: TaskHelpers.difficultyText(task.difficulty),
-            ),
-
-            // Nhóm
-            DetailTile(
-              icon: Icons.group_rounded,
-              iconColor: AppColors.xanh1,
-              title: 'Nhóm',
-              value: task.groupName.isNotEmpty
-                  ? task.groupName
-                  : 'Chưa xác định',
-            ),
-
-            // Trạng thái
-            DetailTile(
-              icon: Icons.person_rounded,
-              iconColor: task.isDone ? AppColors.xanhLa2 : AppColors.doSoft,
-              title: 'Trạng thái',
-              valueWidget: Text(
-                task.isDone ? 'Đã hoàn thành' : 'Chưa xong',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: task.isDone ? AppColors.xanhLa2 : Colors.grey[700],
-                ),
-              ),
-            ),
-
-            // Chi tiết / Mô tả
-            if (task.subtitle.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              const Text(
-                'Chi tiết',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                      color: Colors.black.withOpacity(0.06),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  ],
-                ),
-                child: Text(
-                  task.subtitle,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.6,
-                    color: AppColors.textPrimary,
                   ),
                 ),
-              ),
-            ],
-          ],
+
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              widget.task.title,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Builder(
+                            builder: (btnCtx) => IconButton(
+                              tooltip: 'Tùy chọn',
+                              icon: const Icon(
+                                Icons.more_horiz,
+                                color: AppColors.xanhLa1,
+                              ),
+                              onPressed: () => _showPopoverMenu(btnCtx),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Thời gian
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.grey[200]!,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Bắt đầu',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    start,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 14,
+                              color: AppColors.xanhLa2,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  const Text(
+                                    'Kết thúc',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    end,
+                                    textAlign: TextAlign.right,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Mức độ quan trọng
+                      _ModalDetailTile(
+                        icon: Icons.flag_rounded,
+                        iconColor: _priorityColor(widget.task.priority),
+                        title: 'Mức độ quan trọng',
+                        value: _priorityText(widget.task.priority),
+                      ),
+
+                      // Độ khó
+                      _ModalDetailTile(
+                        icon: Icons.flash_on_rounded,
+                        iconColor: _difficultyColor(widget.task.difficulty),
+                        title: 'Độ khó',
+                        value: _difficultyText(widget.task.difficulty),
+                      ),
+
+                      // Nhóm
+                      _ModalDetailTile(
+                        icon: Icons.group_rounded,
+                        iconColor: AppColors.xanh1,
+                        title: 'Nhóm',
+                        value: widget.task.groupName.isNotEmpty
+                            ? widget.task.groupName
+                            : 'Chưa xác định',
+                      ),
+
+                      // Trạng thái
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.grey[200]!,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color:
+                                    (widget.task.isDone
+                                            ? AppColors.xanhLa2
+                                            : AppColors.doSoft)
+                                        .withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.person_rounded,
+                                size: 18,
+                                color: widget.task.isDone
+                                    ? AppColors.xanhLa2
+                                    : AppColors.doSoft,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: const Text(
+                                'Trạng thái',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              widget.task.isDone
+                                  ? 'Đã hoàn thành'
+                                  : 'Chưa xong',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: widget.task.isDone
+                                    ? AppColors.xanhLa2
+                                    : Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Chi tiết mô tả
+                      if (widget.task.subtitle.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Chi tiết',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.background,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: Colors.grey[200]!,
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            widget.task.subtitle,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              height: 1.6,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class _ActionRow extends StatelessWidget {
-  final String label;
-  final bool isDestructive;
-  final VoidCallback onTap;
+class _ModalDetailTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String value;
 
-  const _ActionRow({
-    required this.label,
-    required this.onTap,
-    this.isDestructive = false,
-  });
+  const _ModalDetailTile({
+    Key? key,
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.value,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: isDestructive ? Colors.red : AppColors.textPrimary,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey[200]!, width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: iconColor),
           ),
-        ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey,
+            ),
+          ),
+        ],
       ),
     );
   }

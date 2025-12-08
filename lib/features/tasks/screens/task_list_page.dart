@@ -1,12 +1,18 @@
-import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
 import 'package:flip/features/tasks/screens/task_calendar_page.dart';
 import 'package:flip/features/tasks/screens/task_edit_page.dart';
 import 'package:flip/features/tasks/screens/task_incomplete_page.dart';
-import 'package:flip/features/tasks/widgets/task_list/task_detail_modal.dart';
+import 'package:flip/features/tasks/services/task_service.dart';
+import 'package:flip/features/tasks/widgets/task_list/quick_action_button.dart';
+import 'package:flip/features/tasks/widgets/task_list/card/task_card_item.dart';
+import 'package:flip/features/tasks/widgets/task_list/action_sheet_button.dart';
+import 'package:flip/features/tasks/screens/task_detail_page.dart';
+import 'package:flip/features/tasks/screens/task_matrix_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flip/theme/app_colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-enum TaskViewType { list, calendar }
+enum TaskViewType { list, calendar, matrix }
 
 class TaskListPage extends StatefulWidget {
   const TaskListPage({super.key});
@@ -17,212 +23,95 @@ class TaskListPage extends StatefulWidget {
 
 class _TaskListPageState extends State<TaskListPage> {
   TaskViewType _viewType = TaskViewType.list;
+  final TaskService _taskService = TaskService();
 
-  final List<TaskItem> _tasks = [
-    TaskItem(
-      id: '1',
-      title: "Reading",
-      subtitle: "Đọc sách tài liệu liên quan đến Flutter và Dart",
-      percent: 0,
-      durationText: "00:00:00",
-      color: AppColors.hong,
-      startTime: DateTime(2024, 12, 23, 8, 0),
-      endTime: DateTime(2024, 12, 23, 10, 0),
-      priority: 2,
-      difficulty: 1,
-      isDone: false,
-      groupName: 'Học tập',
-      reminders: ['5 phút trước'],
-      reminderEnabled: true,
-      repeatText: 'Mỗi 4 Thứ Bảy',
-      repeatEndDate: DateTime(2025, 3, 31),
-      pinned: true,
-    ),
-    TaskItem(
-      id: '2',
-      title: "Học Đa Nền Tảng",
-      subtitle:
-          "Hoàn thành các bài tập thực hành trong lớp học. Luyện tập các khái niệm lập trình đa nền tảng",
-      percent: 50,
-      durationText: "02:30:00",
-      color: AppColors.tim1,
-      startTime: DateTime.now()
-          .add(const Duration(days: 1))
-          .copyWith(hour: 9, minute: 0),
-      endTime: DateTime.now()
-          .add(const Duration(days: 1))
-          .copyWith(hour: 11, minute: 30),
-      priority: 3,
-      difficulty: 2,
-      isDone: false,
-      groupName: 'Lớp học',
-    ),
-    TaskItem(
-      id: '3',
-      title: "Học Java",
-      subtitle: "Ôn tập các kiến thức về Java OOP và design patterns",
-      percent: 75,
-      durationText: "03:45:00",
-      color: AppColors.xanh2,
-      startTime: DateTime.now()
-          .add(const Duration(days: 2))
-          .copyWith(hour: 13, minute: 0),
-      endTime: DateTime.now()
-          .add(const Duration(days: 2))
-          .copyWith(hour: 16, minute: 45),
-      priority: 2,
-      difficulty: 2,
-      isDone: false,
-      groupName: 'Lập trình',
-    ),
-    TaskItem(
-      id: '4',
-      title: "Làm bài tập Flutter",
-      subtitle: "Hoàn thành project todo app với Firebase",
-      percent: 30,
-      durationText: "01:15:00",
-      color: AppColors.cam,
-      startTime: DateTime.now()
-          .add(const Duration(days: 5))
-          .copyWith(hour: 14, minute: 0),
-      endTime: DateTime.now()
-          .add(const Duration(days: 5))
-          .copyWith(hour: 15, minute: 15),
-      priority: 3,
-      difficulty: 3,
-      isDone: false,
-      groupName: 'Project',
-    ),
-    TaskItem(
-      id: '5',
-      title: "Review Code",
-      subtitle: "Kiểm tra và đánh giá code của các bạn cùng team",
-      percent: 60,
-      durationText: "01:30:00",
-      color: AppColors.xanhLa1,
-      startTime: DateTime.now().copyWith(hour: 10, minute: 0),
-      endTime: DateTime.now().copyWith(hour: 11, minute: 30),
-      priority: 2,
-      difficulty: 1,
-      isDone: true,
-      groupName: 'Team',
-    ),
-  ];
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    // Nếu chưa đăng nhập, hiển thị thông báo
+    if (user == null) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: Text('Vui lòng đăng nhập để xem công việc')),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Column(
+        child: StreamBuilder<List<TaskModel>>(
+          stream: _taskService.getTasksByUserId(user.uid),
+          builder: (context, snapshot) {
+            // Loading
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            // Error
+            if (snapshot.hasError) {
+              return Center(child: Text('Lỗi: ${snapshot.error}'));
+            }
+
+            // No data
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('Chưa có công việc nào'));
+            }
+
+            final tasks = snapshot.data!;
+
+            return Column(
+              children: [
+                // Quick Action Button
+                QuickActionButton(
+                  incompleteTaskCount: tasks.where((t) => !t.isDone).length,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TaskIncompletePage(),
+                      ),
+                    );
+                  },
+                ),
+
+                // View Mode Selector
+                _buildViewModeSelector(),
+
+                // Content
+                Expanded(
+                  child: _viewType == TaskViewType.calendar
+                      ? TaskCalendarPage(tasks: tasks)
+                      : _viewType == TaskViewType.matrix
+                      ? TaskMatrixPage(tasks: tasks)
+                      : _buildListView(tasks),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// View mode selector (CARD / LỊCH / MATRIX)
+  Widget _buildViewModeSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+      child: Container(
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Quick Action Button - Công việc chưa hoàn thành
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const TaskIncompletePage(),
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.cam, Color(0xFFFF6B00)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.cam.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.pending_actions,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Công việc chưa hoàn thành',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '${_tasks.where((t) => !t.isDone).length}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Segmented control: CARD / LỊCH
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 10,
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildViewButton('CARD', TaskViewType.list),
-                    _buildDivider(),
-                    _buildViewButton('LỊCH', TaskViewType.calendar),
-                  ],
-                ),
-              ),
-            ),
-
-            Expanded(
-              child: _viewType == TaskViewType.calendar
-                  ? TaskCalendarPage(tasks: _tasks)
-                  : _buildListView(),
-            ),
+            _buildViewButton('CARD', TaskViewType.list),
+            _buildDivider(),
+            _buildViewButton('LỊCH', TaskViewType.calendar),
+            _buildDivider(),
+            _buildViewButton('MATRIX', TaskViewType.matrix),
           ],
         ),
       ),
@@ -272,123 +161,27 @@ class _TaskListPageState extends State<TaskListPage> {
     );
   }
 
-  /// LIST VIEW – mỗi item có nút tick + 3 chấm
-  Widget _buildListView() {
+  /// List view with task cards
+  Widget _buildListView(List<TaskModel> tasks) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: _tasks.length,
+      itemCount: tasks.length,
       itemBuilder: (context, index) {
-        final task = _tasks[index];
+        final task = tasks[index];
 
-        return GestureDetector(
-          onTap: () {
-            _showTaskDetailModal(context, task);
+        return TaskCardItem(
+          task: task,
+          onTap: () => _showTaskDetailModal(context, task),
+          onToggle: () {
+            _taskService.toggleTaskStatus(task.id, !task.isDone);
           },
-          child: Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            color: task.color,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            elevation: 3,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  // Nút tick
-                  IconButton(
-                    iconSize: 28,
-                    padding: EdgeInsets.zero,
-                    icon: Icon(
-                      task.isDone
-                          ? Icons.check_circle_rounded
-                          : Icons.radio_button_unchecked_rounded,
-                      color: Colors.white,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _tasks[index] = task.copyWith(
-                          isDone: !task.isDone,
-                        ); // toggle
-                      });
-                    },
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  // Title + repeat text
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          task.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          task.groupName, // ví dụ: Everyday / Fri / Nhóm
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  // % + time + menu 3 chấm
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '${task.percent}%',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        task.durationText,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(width: 8),
-
-                  // 3 chấm
-                  IconButton(
-                    icon: const Icon(Icons.more_vert, color: Colors.white),
-                    onPressed: () {
-                      _showTaskActions(context, index, task);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
+          onMenu: () => _showTaskActions(context, task),
         );
       },
     );
   }
 
-  void _showTaskDetailModal(BuildContext context, TaskItem task) {
+  void _showTaskDetailModal(BuildContext context, TaskModel task) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -399,8 +192,8 @@ class _TaskListPageState extends State<TaskListPage> {
     );
   }
 
-  /// Bottom sheet: Xóa – Sửa – Hủy
-  void _showTaskActions(BuildContext context, int index, TaskItem task) {
+  /// Bottom sheet: Edit – Delete – Cancel
+  void _showTaskActions(BuildContext context, TaskModel task) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -418,28 +211,52 @@ class _TaskListPageState extends State<TaskListPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _ActionSheetButton(
+                  ActionSheetButton(
                     text: 'Sửa',
                     onTap: () {
                       Navigator.pop(ctx);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              TaskEditPage(task: _tasks[index]),
+                          builder: (context) => TaskEditPage(task: task),
                         ),
                       );
                     },
                   ),
                   const Divider(height: 1),
-                  _ActionSheetButton(
+                  ActionSheetButton(
                     text: 'Xóa',
                     isDestructive: true,
-                    onTap: () {
-                      setState(() {
-                        _tasks.removeAt(index);
-                      });
+                    onTap: () async {
                       Navigator.pop(ctx);
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Xác nhận xóa'),
+                          content: const Text(
+                            'Bạn có chắc chắn muốn xóa nhiệm vụ này không?',
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Hủy'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              child: const Text('Xóa'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true) {
+                        _taskService.deleteTask(task.id);
+                      }
                     },
                   ),
                 ],
@@ -451,7 +268,7 @@ class _TaskListPageState extends State<TaskListPage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: _ActionSheetButton(
+              child: ActionSheetButton(
                 text: 'Hủy',
                 onTap: () => Navigator.pop(ctx),
               ),
@@ -459,40 +276,6 @@ class _TaskListPageState extends State<TaskListPage> {
           ],
         );
       },
-    );
-  }
-}
-
-/// Nút trong action sheet
-class _ActionSheetButton extends StatelessWidget {
-  final String text;
-  final bool isDestructive;
-  final VoidCallback onTap;
-
-  const _ActionSheetButton({
-    Key? key,
-    required this.text,
-    required this.onTap,
-    this.isDestructive = false,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: Container(
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: isDestructive ? Colors.red : Colors.blue,
-          ),
-        ),
-      ),
     );
   }
 }

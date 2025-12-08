@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flip/theme/app_colors.dart';
-import 'package:flip/features/tasks/models/task_item.dart';
+import 'package:flip/features/tasks/models/task_model.dart';
 import 'package:flip/features/tasks/screens/task_detail_page.dart';
 import 'package:intl/intl.dart';
 
 class IncompleteTaskCard extends StatelessWidget {
-  final TaskItem task;
+  final TaskModel task;
   final bool isOverdue;
 
   const IncompleteTaskCard({
@@ -18,9 +18,11 @@ class IncompleteTaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => TaskDetailPage(task: task)),
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => TaskDetailModal(task: task),
         );
       },
       child: Container(
@@ -130,7 +132,7 @@ class IncompleteTaskCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 // Progress
-                _buildProgressIndicator(task.percent, task.color),
+                _buildProgressIndicator(task.getAutoPercent(), task.color),
               ],
             ),
           ],

@@ -14,12 +14,12 @@
         }
       },
       "oauth_client": [
-        {
-          "client_id": "639479435926-g08d6pe8i4ve2ibrvo12m53a43ug3sec.apps.googleusercontent.com",
+      {
+          "client_id": "639479435926-88odihkjitc8h4m36vhhvb58vfmftu5p.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.flip",
-            "certificate_hash": "ac03a19918dce912cea85126f553c335635e293e"
+            "certificate_hash": "cf40d3eb0aeded01bcadc26946c102fe7f5e77db"
           }
         },
         {
