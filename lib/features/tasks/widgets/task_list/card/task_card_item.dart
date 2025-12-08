@@ -1,7 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flip/features/tasks/models/task_model.dart';
 
-class TaskCardItem extends StatelessWidget {
+class TaskCardItem extends StatefulWidget {
   final TaskModel task;
   final VoidCallback onTap;
   final VoidCallback onToggle;
@@ -16,12 +17,52 @@ class TaskCardItem extends StatelessWidget {
   });
 
   @override
+  State<TaskCardItem> createState() => _TaskCardItemState();
+}
+
+class _TaskCardItemState extends State<TaskCardItem> {
+  late int _currentPercent;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPercent = widget.task.getAutoPercent();
+    _startPercentTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant TaskCardItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.task.id != widget.task.id) {
+      _currentPercent = widget.task.getAutoPercent();
+    }
+  }
+
+  void _startPercentTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final newPercent = widget.task.getAutoPercent();
+      if (newPercent != _currentPercent) {
+        setState(() {
+          _currentPercent = newPercent;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Card(
         margin: const EdgeInsets.only(bottom: 12),
-        color: task.color,
+        color: widget.task.color,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         elevation: 3,
         child: Padding(
@@ -33,12 +74,12 @@ class TaskCardItem extends StatelessWidget {
                 iconSize: 28,
                 padding: EdgeInsets.zero,
                 icon: Icon(
-                  task.isDone
+                  widget.task.isDone
                       ? Icons.check_circle_rounded
                       : Icons.radio_button_unchecked_rounded,
                   color: Colors.white,
                 ),
-                onPressed: onToggle,
+                onPressed: widget.onToggle,
               ),
 
               const SizedBox(width: 12),
@@ -49,7 +90,7 @@ class TaskCardItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      task.title,
+                      widget.task.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -60,7 +101,7 @@ class TaskCardItem extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      task.groupName,
+                      widget.task.groupName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -79,7 +120,7 @@ class TaskCardItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${task.percent}%',
+                    '$_currentPercent%',
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -88,7 +129,7 @@ class TaskCardItem extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    task.durationText,
+                    widget.task.durationText,
                     style: const TextStyle(fontSize: 14, color: Colors.white),
                   ),
                 ],
@@ -99,7 +140,7 @@ class TaskCardItem extends StatelessWidget {
               // Menu button
               IconButton(
                 icon: const Icon(Icons.more_vert, color: Colors.white),
-                onPressed: onMenu,
+                onPressed: widget.onMenu,
               ),
             ],
           ),

@@ -6,7 +6,6 @@ class TaskModel {
   final String id;
   final String title;
   final String subtitle;
-  final int percent;
   final Color color;
   final String colorName;
   final DateTime startTime;
@@ -21,12 +20,12 @@ class TaskModel {
   final DateTime? repeatEndDate;
   final bool pinned;
   final String? matrixQuadrant; // DO_FIRST, SCHEDULE, DELEGATE, ELIMINATE
+  final bool activity; // true: active, false: deleted
 
   TaskModel({
     required this.id,
     required this.title,
     this.subtitle = '',
-    this.percent = 0,
     required this.color,
     required this.colorName,
     required this.startTime,
@@ -41,14 +40,13 @@ class TaskModel {
     this.repeatEndDate,
     this.pinned = TaskConstants.defaultPinned,
     this.matrixQuadrant,
+    this.activity = true,
   });
 
   TaskModel copyWith({
     String? id,
     String? title,
     String? subtitle,
-    int? percent,
-    String? durationText,
     Color? color,
     String? colorName,
     DateTime? startTime,
@@ -63,12 +61,12 @@ class TaskModel {
     DateTime? repeatEndDate,
     bool? pinned,
     String? matrixQuadrant,
+    bool? activity,
   }) {
     return TaskModel(
       id: id ?? this.id,
       title: title ?? this.title,
       subtitle: subtitle ?? this.subtitle,
-      percent: percent ?? this.percent,
       color: color ?? this.color,
       colorName: colorName ?? this.colorName,
       startTime: startTime ?? this.startTime,
@@ -83,6 +81,7 @@ class TaskModel {
       repeatEndDate: repeatEndDate ?? this.repeatEndDate,
       pinned: pinned ?? this.pinned,
       matrixQuadrant: matrixQuadrant ?? this.matrixQuadrant,
+      activity: activity ?? this.activity,
     );
   }
 
@@ -104,12 +103,12 @@ class TaskModel {
           ? TaskConstants.typeGroup
           : TaskConstants.typePersonal,
       'groupName': groupName,
-      'percent': percent,
       'reminders': reminders,
       'reminderEnabled': reminderEnabled,
       'repeatText': repeatText,
       'repeatEndDate': repeatEndDate?.millisecondsSinceEpoch,
       'pinned': pinned,
+      'activity': activity,
       'createdAt': DateTime.now(),
       'updatedAt': DateTime.now(),
     };
@@ -123,6 +122,33 @@ class TaskModel {
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
     return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:00';
+  }
+
+  /// Tính phần trăm tự động dựa trên thời gian đã trôi qua
+  /// Formula: percent = (currentTime - startTime) / (endTime - startTime) * 100
+  int getAutoPercent() {
+    if (isDone) return 100;
+
+    final now = DateTime.now();
+
+    // Nếu chưa bắt đầu, percent = 0
+    if (now.isBefore(startTime)) {
+      return 0;
+    }
+
+    // Nếu đã kết thúc, percent = 100
+    if (now.isAfter(endTime)) {
+      return 100;
+    }
+
+    // Tính phần trăm dựa trên thời gian đã trôi qua
+    final totalDuration = endTime.difference(startTime).inSeconds;
+    final elapsedDuration = now.difference(startTime).inSeconds;
+
+    if (totalDuration <= 0) return 0;
+
+    final calculatedPercent = (elapsedDuration / totalDuration * 100).toInt();
+    return calculatedPercent.clamp(0, 100);
   }
 
   /// Tạo TaskModel từ data Realtime Database
@@ -172,10 +198,6 @@ class TaskModel {
       id: docId,
       title: data['title'] ?? 'Untitled Task',
       subtitle: data['description'] ?? '',
-      percent: (data['percent'] ?? TaskConstants.defaultPercent) is int
-          ? data['percent'] as int
-          : int.tryParse(data['percent'].toString()) ??
-                TaskConstants.defaultPercent,
       color: taskColor,
       colorName: colorNameStr,
       startTime: startTime,
@@ -193,6 +215,7 @@ class TaskModel {
       pinned: (data['pinned'] as bool?) ?? TaskConstants.defaultPinned,
       matrixQuadrant:
           (data['matrixQuadrant'] as String?) ?? TaskConstants.defaultQuadrant,
+      activity: (data['activity'] as bool?) ?? true,
     );
   }
 

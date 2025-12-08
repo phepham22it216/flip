@@ -15,13 +15,6 @@ class StatisticsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final totalIncomplete = tasks.where((t) => !t.isDone).length;
-    final avgProgress = totalIncomplete > 0
-        ? tasks
-                  .where((t) => !t.isDone)
-                  .map((t) => t.percent)
-                  .reduce((a, b) => a + b) /
-              totalIncomplete
-        : 0.0;
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -67,14 +60,6 @@ class StatisticsCard extends StatelessWidget {
                     color: Colors.white,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Tiến độ trung bình: ${avgProgress.toStringAsFixed(0)}%',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 14,
                   ),
                 ),
               ],

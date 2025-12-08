@@ -18,9 +18,11 @@ class IncompleteTaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => TaskDetailPage(task: task)),
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => TaskDetailModal(task: task),
         );
       },
       child: Container(
@@ -130,7 +132,7 @@ class IncompleteTaskCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 // Progress
-                _buildProgressIndicator(task.percent, task.color),
+                _buildProgressIndicator(task.getAutoPercent(), task.color),
               ],
             ),
           ],

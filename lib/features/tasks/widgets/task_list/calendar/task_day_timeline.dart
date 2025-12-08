@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:flip/features/tasks/models/task_model.dart';
-import 'package:flip/features/tasks/widgets/task_list/task_detail_modal.dart';
+import 'package:flip/features/tasks/screens/task_detail_page.dart';
 
 class TaskDayTimeline extends StatelessWidget {
   final DateTime day;

@@ -5,7 +5,7 @@ import 'package:flip/features/tasks/services/task_service.dart';
 
 import 'package:flip/features/tasks/widgets/task_list/matrix/matrix_layout.dart';
 import 'package:flip/features/tasks/widgets/task_list/matrix/task_utils.dart';
-import 'package:flip/features/tasks/widgets/task_list/task_detail_modal.dart';
+import 'package:flip/features/tasks/screens/task_detail_page.dart';
 
 class TaskMatrixPage extends StatefulWidget {
   final List<TaskModel> tasks;

@@ -1,23 +1,63 @@
+import 'dart:async';
 import 'package:flip/features/tasks/models/task_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flip/theme/app_colors.dart';
 
-class TaskCard extends StatelessWidget {
+class TaskCard extends StatefulWidget {
   final TaskModel task;
   final VoidCallback? onTap;
 
   const TaskCard({super.key, required this.task, this.onTap});
 
   @override
+  State<TaskCard> createState() => _TaskCardState();
+}
+
+class _TaskCardState extends State<TaskCard> {
+  late int _currentPercent;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPercent = widget.task.getAutoPercent();
+    _startPercentTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant TaskCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.task.id != widget.task.id) {
+      _currentPercent = widget.task.getAutoPercent();
+    }
+  }
+
+  void _startPercentTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final newPercent = widget.task.getAutoPercent();
+      if (newPercent != _currentPercent) {
+        setState(() {
+          _currentPercent = newPercent;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     const radius = 24.0;
-
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
         height: 110,
         decoration: BoxDecoration(
-          color: task.color.withOpacity(0.85),
+          color: widget.task.color.withOpacity(0.85),
           borderRadius: BorderRadius.circular(radius),
           boxShadow: [
             BoxShadow(
@@ -53,7 +93,7 @@ class TaskCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    task.title,
+                    widget.task.title,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -62,7 +102,7 @@ class TaskCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    task.subtitle,
+                    widget.task.subtitle,
                     style: const TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                 ],
@@ -73,7 +113,7 @@ class TaskCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  '${task.percent}%',
+                  '$_currentPercent%',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -82,7 +122,7 @@ class TaskCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  task.durationText,
+                  widget.task.durationText,
                   style: const TextStyle(color: Colors.white, fontSize: 13),
                 ),
               ],
