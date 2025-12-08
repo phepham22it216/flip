@@ -38,7 +38,7 @@ class _TaskListPageState extends State<TaskListPage> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFE3F2FD),
       body: SafeArea(
         child: StreamBuilder<List<TaskModel>>(
           stream: _taskService.getTasksByUserId(user.uid),
