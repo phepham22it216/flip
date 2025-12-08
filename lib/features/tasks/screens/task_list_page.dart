@@ -53,12 +53,7 @@ class _TaskListPageState extends State<TaskListPage> {
               return Center(child: Text('Lỗi: ${snapshot.error}'));
             }
 
-            // No data
-            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text('Chưa có công việc nào'));
-            }
-
-            final tasks = snapshot.data!;
+            final tasks = snapshot.data ?? [];
 
             return Column(
               children: [
@@ -163,6 +158,31 @@ class _TaskListPageState extends State<TaskListPage> {
 
   /// List view with task cards
   Widget _buildListView(List<TaskModel> tasks) {
+    if (tasks.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.task_outlined, size: 80, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Text(
+              'Chưa có công việc nào',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Nhấn nút + để thêm công việc mới',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
+            ),
+          ],
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: tasks.length,
