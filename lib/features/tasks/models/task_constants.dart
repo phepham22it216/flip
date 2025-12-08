@@ -4,11 +4,9 @@ import 'package:flip/theme/app_colors.dart';
 /// Constants cho Task Management
 class TaskConstants {
   // ============ TRẠNG THÁI (STATUS) ============
-  static const String statusPending = 'pending';
-  static const String statusInProgress = 'inProgress';
-  static const String statusCompleted = 'completed';
-  static const String statusCancelled = 'cancelled';
-
+  static const String statusInProgress = 'inProgress'; // chưa xong
+  static const String statusCompleted = 'completed'; // Hoàn thành
+  
   // ============ ĐỘ ƯU TIÊN (PRIORITY) ============
   static const int priorityLow = 1;
   static const int priorityMedium = 2;

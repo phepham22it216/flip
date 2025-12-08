@@ -180,7 +180,7 @@ class TaskModel {
 
     final startTime = parseMs(data['startTime']);
     final endTime = parseMs(data['endTime']);
-    final status = data['status'] ?? TaskConstants.statusPending;
+    final status = data['status'];
     final isDone = status == TaskConstants.statusCompleted;
 
     final rawReminders = data['reminders'];
