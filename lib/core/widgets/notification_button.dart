@@ -20,6 +20,9 @@ class _NotificationButtonState extends State<NotificationButton> {
   void initState() {
     super.initState();
 
+    // Fixed here: Load notifications từ Realtime DB khi init
+    _notifyService.loadNotificationsFromDB();
+
     // Lắng nghe thông báo từ service
     _notifyService.notificationsStream.listen((notifs) {
       setState(() {
@@ -61,7 +64,7 @@ class _NotificationButtonState extends State<NotificationButton> {
                     return ListTile(
                       leading: CircleAvatar(
                         backgroundColor:
-                        notif.type == "system" ? Colors.blue : Colors.orange,
+                        notif.type == "System" ? Colors.blue : Colors.orange,
                         child: Text(
                           notif.type[0].toUpperCase(),
                           style: const TextStyle(color: Colors.white),
@@ -72,6 +75,11 @@ class _NotificationButtonState extends State<NotificationButton> {
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(notif.content),
+                      trailing: Text(
+                        // FIXED HERE: hiển thị thời gian tạo
+                        "${notif.createdAt.hour.toString().padLeft(2, '0')}:${notif.createdAt.minute.toString().padLeft(2, '0')}",
+                        style: const TextStyle(fontSize: 10, color: Colors.grey),
+                      ),
                     );
                   },
                 ),
@@ -85,6 +93,8 @@ class _NotificationButtonState extends State<NotificationButton> {
                       n.isRead = true;
                     }
                   });
+                  // Fixed here: cập nhật isRead lên DB
+                  _notifyService.markAllAsRead(_notifications);
                   Navigator.of(ctx).pop();
                 },
                 child: const Text("Đóng"),

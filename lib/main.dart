@@ -7,12 +7,19 @@ import 'package:flip/features/home/screens/home_page.dart';
 import 'package:flip/features/team/screens/team_page.dart';
 import 'package:flip/features/more/screens/account_page.dart';
 import 'package:flip/features/tasks/screens/task_create_page.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flip/features/more/screens/login_page.dart';
+import 'core/services/notify_service.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flip/features/more/services/auth_service.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+FlutterLocalNotificationsPlugin();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +30,18 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  tz.initializeTimeZones(); // <--- Quan trọng
+  tz.setLocalLocation(tz.getLocation('Asia/Ho_Chi_Minh'));
+
+  await flutterLocalNotificationsPlugin.initialize(
+    const InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: DarwinInitializationSettings(),
+    ),
+  );
+
+  await NotifyService().initMobile();
+
   await initializeDateFormatting('vi_VN', null);
 
   runApp(const MyApp());

@@ -33,6 +33,7 @@ dependencies:
   http: ^1.1.0
   image_picker: ^1.2.1
   syncfusion_flutter_charts: ^31.2.16
+  flutter_local_notifications: ^19.5.0
   intl: 0.20.2
   flutter:
     sdk: flutter
