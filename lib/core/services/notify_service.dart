@@ -13,8 +13,9 @@ import 'package:timezone/timezone.dart' as tz;
 class NotifyService {
   final TaskService _taskService = TaskService();
 
-  final DatabaseReference _notifRef =
-  FirebaseDatabase.instance.ref().child("notifications");
+  final DatabaseReference _notifRef = FirebaseDatabase.instance.ref().child(
+    "notifications",
+  );
 
   // Thêm vào hàm này
   Future<void> saveNotificationToDB(NotifyModel notif, String userId) async {
@@ -53,13 +54,12 @@ class NotifyService {
   }
 
   final StreamController<List<NotifyModel>> _notifyController =
-  StreamController.broadcast();
+      StreamController.broadcast();
 
   List<NotifyModel> _cachedNotifications = [];
   Timer? _refreshTimer;
 
-  Stream<List<NotifyModel>> get notificationsStream =>
-      _notifyController.stream;
+  Stream<List<NotifyModel>> get notificationsStream => _notifyController.stream;
 
   // ---------------------------------------------------------------------------
   // AUTO REFRESH MỖI 1 PHÚT
@@ -86,8 +86,11 @@ class NotifyService {
       }
     }
 
-    _cachedNotifications = merged; // Fixed here: cập nhật cachedNotifications bằng merged
-    _notifyController.add(merged); // Fixed here: phát Stream với tất cả notifications
+    _cachedNotifications =
+        merged; // Fixed here: cập nhật cachedNotifications bằng merged
+    _notifyController.add(
+      merged,
+    ); // Fixed here: phát Stream với tất cả notifications
   }
 
   // ---------------------------------------------------------------------------
@@ -101,7 +104,8 @@ class NotifyService {
     final now = DateTime.now();
 
     final filtered = allTasks.where((task) {
-      return task.status == "inProgress" && task.reminderEnabled == true &&
+      return task.status == "inProgress" &&
+          task.reminderEnabled == true &&
           task.reminders.isNotEmpty &&
           task.endTime.isAfter(now) &&
           task.reminders.any((r) => validReminders.contains(r));
@@ -239,6 +243,8 @@ class NotifyService {
       tz.TZDateTime.from(scheduledTime, tz.local),
       platform,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: null,
       payload: null,
     );
@@ -253,6 +259,7 @@ class NotifyService {
     // Tạo lịch mới
     await _scheduleMobileNotifications();
   }
+
   Future<void> initMobile() async {
     if (!kIsWeb) {
       await refreshMobileSchedule();
@@ -263,19 +270,65 @@ class NotifyService {
   // Load tất cả thông báo của user từ Realtime DB
   Future<void> loadNotificationsFromDB() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    final snapshot = await _notifRef.orderByChild("userId").equalTo(user.uid).get();
-    final List<NotifyModel> list = [];
-    for (final child in snapshot.children) {
-      final value = child.value;
-      if (value is Map) {
-        list.add(NotifyModel.fromMap(Map<String, dynamic>.from(value)));
-      }
+    if (user == null) {
+      print("❌ loadNotificationsFromDB: user == null (chưa đăng nhập?)");
+      return;
     }
 
-    _cachedNotifications = list;
-    _notifyController.add(list);
+    print(
+      "🔑 loadNotificationsFromDB: uid = ${user.uid}, email = ${user.email}",
+    );
+
+    try {
+      // ✅ Cách 1: Dùng Query với listener (tốt hơn)
+      final query = _notifRef.orderByChild("userId").equalTo(user.uid);
+
+      query
+          .once()
+          .then((DatabaseEvent event) {
+            final snapshot = event.snapshot;
+
+            if (snapshot.value == null) {
+              print("📥 Không có thông báo nào");
+              return;
+            }
+
+            print("📥 snapshot.value type = ${snapshot.value.runtimeType}");
+
+            final List<NotifyModel> list = [];
+
+            if (snapshot.value is Map) {
+              final Map<dynamic, dynamic> data = snapshot.value as Map;
+              for (final entry in data.entries) {
+                try {
+                  final value = entry.value;
+                  print(
+                    "  ➜ key = ${entry.key}, value type = ${value.runtimeType}",
+                  );
+
+                  if (value is Map) {
+                    list.add(
+                      NotifyModel.fromMap(
+                        Map<String, dynamic>.from(value as Map),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  print("  ❌ Lỗi parse notification ${entry.key}: $e");
+                }
+              }
+            }
+
+            print("✅ parsed notifications = ${list.length}");
+            _cachedNotifications = list;
+            _notifyController.add(list);
+          })
+          .catchError((error) {
+            print("❌ Lỗi khi load notifications: $error");
+          });
+    } catch (e) {
+      print("❌ Exception: $e");
+    }
   }
 
   // Cập nhật tất cả thông báo là đã đọc
@@ -291,5 +344,4 @@ class NotifyService {
       });
     }
   }
-
 }
