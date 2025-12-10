@@ -25,6 +25,8 @@ class _NotificationButtonState extends State<NotificationButton> {
 
     // Lắng nghe thông báo từ service
     _notifyService.notificationsStream.listen((notifs) {
+      notifs.sort((a, b) => b.createdAt.compareTo(a.createdAt)); // mới → cũ
+
       setState(() {
         _notifications = notifs;
         _hasUnread = notifs.any((n) => !n.isRead);
@@ -77,7 +79,7 @@ class _NotificationButtonState extends State<NotificationButton> {
                       subtitle: Text(notif.content),
                       trailing: Text(
                         // FIXED HERE: hiển thị thời gian tạo
-                        "${notif.createdAt.hour.toString().padLeft(2, '0')}:${notif.createdAt.minute.toString().padLeft(2, '0')}",
+                        formatTime(notif.createdAt),
                         style: const TextStyle(fontSize: 10, color: Colors.grey),
                       ),
                     );

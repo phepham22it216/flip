@@ -48,9 +48,10 @@ class NotifyService {
       _autoRefreshStarted = true;
       _startAutoRefresh(); // ⚠️ COMMENT DÒNG NÀY hoặc comment toàn bộ function _startAutoRefresh() ĐỂ TẮT AUTO REFRESH
     }
-    // else if (!kIsWeb) {
-    //   _scheduleMobileNotifications();
-    // }
+    else if (!kIsWeb) {
+      _scheduleMobileNotifications();
+      _startAutoRefresh();
+    }
   }
 
   final StreamController<List<NotifyModel>> _notifyController =
@@ -260,6 +261,30 @@ class NotifyService {
     await _scheduleMobileNotifications();
   }
 
+  // ⭐ HÀM MỚI — hiện thông báo ngay lập tức trên mobile
+  Future<void> showMobileInstantNotification(NotifyModel notif) async {
+    if (kIsWeb) return;
+
+    final android = AndroidNotificationDetails(
+      'instant_channel',
+      'Instant Notifications',
+      channelDescription: 'Thông báo ngay lập tức khi có dữ liệu mới',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+
+    final ios = DarwinNotificationDetails();
+
+    final platform = NotificationDetails(android: android, iOS: ios);
+
+    await flutterLocalNotificationsPlugin.show(
+      notif.notificationId.hashCode,
+      notif.title,
+      notif.content,
+      platform,
+    );
+  }
+
   Future<void> initMobile() async {
     if (!kIsWeb) {
       await refreshMobileSchedule();
@@ -275,57 +300,73 @@ class NotifyService {
       return;
     }
 
-    print(
-      "🔑 loadNotificationsFromDB: uid = ${user.uid}, email = ${user.email}",
-    );
+    print("🔑 loadNotificationsFromDB: uid = ${user.uid}, email = ${user.email}");
 
     try {
-      // ✅ Cách 1: Dùng Query với listener (tốt hơn)
+      // ⭐ ĐÃ SỬA — dùng listener thay vì chỉ load 1 lần
       final query = _notifRef.orderByChild("userId").equalTo(user.uid);
 
-      query
-          .once()
-          .then((DatabaseEvent event) {
-            final snapshot = event.snapshot;
+      // ⭐ ĐÃ SỬA — thêm listener realtime
+      query.onValue.listen((DatabaseEvent event) {
+        final snapshot = event.snapshot;
 
-            if (snapshot.value == null) {
-              print("📥 Không có thông báo nào");
-              return;
-            }
+        if (snapshot.value == null) {
+          print("📥 Không có thông báo nào (realtime)");
+          _cachedNotifications = [];
+          _notifyController.add([]);
+          return;
+        }
 
-            print("📥 snapshot.value type = ${snapshot.value.runtimeType}");
+        print("📥 snapshot.value type = ${snapshot.value.runtimeType}");
 
-            final List<NotifyModel> list = [];
+        final List<NotifyModel> list = [];
 
-            if (snapshot.value is Map) {
-              final Map<dynamic, dynamic> data = snapshot.value as Map;
-              for (final entry in data.entries) {
-                try {
-                  final value = entry.value;
-                  print(
-                    "  ➜ key = ${entry.key}, value type = ${value.runtimeType}",
-                  );
+        // ⭐ Giữ logic parse cũ
+        if (snapshot.value is Map) {
+          final Map<dynamic, dynamic> data = snapshot.value as Map;
+          for (final entry in data.entries) {
+            try {
+              final value = entry.value;
+              print(
+                "  ➜ key = ${entry.key}, value type = ${value.runtimeType}",
+              );
 
-                  if (value is Map) {
-                    list.add(
-                      NotifyModel.fromMap(
-                        Map<String, dynamic>.from(value as Map),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  print("  ❌ Lỗi parse notification ${entry.key}: $e");
-                }
+              if (value is Map) {
+                list.add(
+                  NotifyModel.fromMap(
+                    Map<String, dynamic>.from(value as Map),
+                  ),
+                );
               }
+            } catch (e) {
+              print("  ❌ Lỗi parse notification ${entry.key}: $e");
             }
+          }
+        }
 
-            print("✅ parsed notifications = ${list.length}");
-            _cachedNotifications = list;
-            _notifyController.add(list);
-          })
-          .catchError((error) {
-            print("❌ Lỗi khi load notifications: $error");
-          });
+        print("✅ parsed notifications (realtime) = ${list.length}");
+
+        // ⭐ XÁC ĐỊNH THÔNG BÁO MỚI
+        for (var notif in list) {
+          final existed = _cachedNotifications.any(
+                (old) => old.notificationId == notif.notificationId,
+          );
+
+          if (!existed) {
+            print("📢 PHÁT HIỆN THÔNG BÁO MỚI: ${notif.notificationId}");
+
+            // ⭐ GỌI POPUP MOBILE (Only Mobile)
+            showMobileInstantNotification(notif);
+          }
+        }
+
+        // ⭐ CẬP NHẬT CACHE SAU KHI XỬ LÝ
+        _cachedNotifications = list;
+        _notifyController.add(list);
+
+      });
+
+      print("🟢 Real-time listener được kích hoạt!");
     } catch (e) {
       print("❌ Exception: $e");
     }
@@ -343,5 +384,19 @@ class NotifyService {
         "updatedAt": DateTime.now().toIso8601String(),
       });
     }
+  }
+}
+
+String formatTime(DateTime date) {
+  final now = DateTime.now();
+
+  final isToday = date.year == now.year &&
+      date.month == now.month &&
+      date.day == now.day;
+
+  if (isToday) {
+    return "${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
+  } else {
+    return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
   }
 }

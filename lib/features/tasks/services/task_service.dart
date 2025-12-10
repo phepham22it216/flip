@@ -74,8 +74,11 @@ class TaskService {
       data['groupId'] = groupId;
       data['type'] = TaskConstants.typeGroup;
     }
-    data['createdAt'] = DateTime.now();
-    data['updatedAt'] = DateTime.now();
+    // data['createdAt'] = DateTime.now();
+    // data['updatedAt'] = DateTime.now();
+    // ⭐ FIX LỖI: không được set DateTime trực tiếp
+    data['createdAt'] = ServerValue.timestamp;
+    data['updatedAt'] = ServerValue.timestamp;
 
     await newRef.set(data);
     if (kIsWeb) {
