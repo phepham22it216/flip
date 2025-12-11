@@ -2,6 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flip/features/tasks/models/task_model.dart';
 import 'package:flip/features/tasks/models/task_constants.dart';
+import 'package:flutter/foundation.dart';
+
+import '../../../core/services/notify_service.dart';
 
 class TaskService {
   final DatabaseReference _db = FirebaseDatabase.instance.ref();
@@ -14,9 +17,9 @@ class TaskService {
     return FirebaseDatabase.instance.ref("users/$userId/tasks");
   }
 
-  /// Lấy tasks của user theo creatorId (chỉ activity = true)
+  /// Lấy tasks của user theo userId (chỉ activity = true)
   Stream<List<TaskModel>> getTasksByUserId(String userId) {
-    return _tasksRef.orderByChild('creatorId').equalTo(userId).onValue.map((
+    return _tasksRef.orderByChild('userId').equalTo(userId).onValue.map((
       event,
     ) {
       final List<TaskModel> tasks = [];
@@ -64,10 +67,7 @@ class TaskService {
 
     final newRef = _tasksRef.push();
     final data = task.toMap();
-
-    // đảm bảo có cả creatorId và userId (phù hợp với các rule khác nhau)
-    data['creatorId'] = user.uid;
-    data['userId'] = user.uid; // <-- quan trọng để pass rule auth check
+    data['userId'] = user.uid;
 
     // Khi tạo mới, luôn set matrixQuadrant là ELIMINATE (không khẩn cấp, không quan trọng)
     data['matrixQuadrant'] = TaskConstants.defaultQuadrant;
@@ -75,12 +75,15 @@ class TaskService {
       data['groupId'] = groupId;
       data['type'] = TaskConstants.typeGroup;
     }
-
-    // Dùng ServerValue.timestamp để server set thời gian chính xác
     data['createdAt'] = ServerValue.timestamp;
     data['updatedAt'] = ServerValue.timestamp;
 
     await newRef.set(data);
+    if (kIsWeb) {
+      await NotifyService().refreshNotifications();
+    } else {
+      await NotifyService().refreshMobileSchedule();
+    }
   }
 
   /// Thêm task mới cho user cụ thể
@@ -105,6 +108,11 @@ class TaskService {
     data['updatedAt'] = ServerValue.timestamp;
 
     await _tasksRef.child(taskId).update(data);
+    if (kIsWeb) {
+      await NotifyService().refreshNotifications();
+    } else {
+      await NotifyService().refreshMobileSchedule();
+    }
   }
 
   /// Cập nhật task cho user cụ thể
@@ -115,6 +123,11 @@ class TaskService {
   ) async {
     data["updatedAt"] = ServerValue.timestamp;
     await getTaskRef(userId).child(taskId).update(data);
+    if (kIsWeb) {
+      await NotifyService().refreshNotifications();
+    } else {
+      await NotifyService().refreshMobileSchedule();
+    }
   }
 
   /// Xóa task (đánh dấu activity = false)

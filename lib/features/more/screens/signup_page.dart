@@ -69,7 +69,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                   // Title
                   Text(
-                    "~ Sign Up ~",
+                    "~ Đăng Ký ~",
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -92,7 +92,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         TextField(
                           controller: nameController,
                           decoration: InputDecoration(
-                            labelText: "Full Name",
+                            labelText: "Họ và tên",
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -119,7 +119,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           controller: passController,
                           obscureText: _obscurePass,
                           decoration: InputDecoration(
-                            labelText: "Password",
+                            labelText: "Mật khẩu",
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -143,7 +143,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           controller: repassController,
                           obscureText: _obscureRePass,
                           decoration: InputDecoration(
-                            labelText: "Confirm Password",
+                            labelText: "Nhập lại mật khẩu",
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -185,20 +185,20 @@ class _SignupScreenState extends State<SignupScreen> {
                               final repass = repassController.text.trim();
 
                               if (name.isEmpty || email.isEmpty || pass.isEmpty || repass.isEmpty) {
-                                showMsg(context, "Please fill in all fields!");
+                                showMsg(context, "Vui lòng nhập đầy đủ thông tin!");
                                 return;
                               }
                               final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
                               if (!emailRegex.hasMatch(email)) {
-                                showMsg(context, "Please enter a valid email!");
+                                showMsg(context, "Sai định dạng email!");
                                 return;
                               }
                               if (pass.length < 6) {
-                                showMsg(context, "Password must be at least 6 characters!");
+                                showMsg(context, "Mật khẩu không được ít hơn 6 kí tự");
                                 return;
                               }
                               if (pass != repass) {
-                                showMsg(context, "Passwords do not match!");
+                                showMsg(context, "Bạn nhập mật khẩu chưa khớp nhau!");
                                 return;
                               }
 
@@ -211,12 +211,12 @@ class _SignupScreenState extends State<SignupScreen> {
 
                                 if (user == null) {
                                   // Đăng ký thất bại
-                                  showMsg(context, "Sign-up failed. Please try again.");
+                                  showMsg(context, "Đăng ký thất bại. Vui lòng thử lại!");
                                   return; // Không chuyển hướng
                                 }
 
                                 // Đăng ký thành công → chuyển hướng về Login
-                                showMsg(context, "Sign-up successful! Please login.");
+                                showMsg(context, "Đăng nhập thành công. Bây giờ hãy đăng nhập!");
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
@@ -234,7 +234,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                             ),
                             child: Text(
-                              "Sign Up",
+                              "Đăng Ký",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -254,7 +254,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        "Already have an account? ",
+                        "Bạn đã có tài khoản? ",
                         style: TextStyle(color: Colors.white),
                       ),
                       GestureDetector(
@@ -265,7 +265,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           );
                         },
                         child: const Text(
-                          "Login",
+                          "Đăng Nhập",
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF73F197),

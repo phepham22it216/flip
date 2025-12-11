@@ -200,7 +200,7 @@ class TaskModel {
 
     final startTime = parseMs(data['startTime']);
     final endTime = parseMs(data['endTime']);
-    final status = data['status'] ?? TaskConstants.statusPending;
+    final status = data['status'];
     final isDone = status == TaskConstants.statusCompleted;
 
     final rawReminders = data['reminders'];
@@ -298,4 +298,10 @@ class TaskModel {
   String _getQuadrantFromColor() {
     return TaskConstants.getQuadrantFromColor(color);
   }
+
+  /// Lấy status trực tiếp từ task (inProgress / completed / pending)
+  String get status {
+    return isDone ? TaskConstants.statusCompleted : TaskConstants.statusInProgress;
+  }
+
 }

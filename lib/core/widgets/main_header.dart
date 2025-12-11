@@ -43,7 +43,7 @@ class MainHeader extends StatelessWidget implements PreferredSizeWidget {
                   ),
                 ),
 
-                const NotificationButton(),
+                NotificationButton(),
               ],
             ),
           ),

@@ -11,23 +11,24 @@ plugins {
 android {
     namespace = "com.example.flip"
     compileSdk = flutter.compileSdkVersion
-    //ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // ❌ KHÔNG dùng VERSION_21 nữa
+        // ✅ Dùng Java 17 (KHÔNG phải Java 8)
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+
+        // Bật desugaring cho flutter_local_notifications
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
-        //jvmTarget = JavaVersion.VERSION_21.toString()
+        // Kotlin cũng target 17
         jvmTarget = "17"
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.flip"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -36,8 +37,6 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -45,4 +44,11 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // ⚠️ BẮT BUỘC phải có, nếu không thì AAR metadata sẽ báo lỗi như log
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
+    // Các dependency khác (firebase, google_sign_in, ... của em)
 }
