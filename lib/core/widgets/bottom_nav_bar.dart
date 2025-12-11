@@ -31,26 +31,26 @@ class BottomNavBar extends StatelessWidget {
               children: [
                 _NavBarItem(
                   icon: Icons.task_alt,
-                  label: 'Task',
+                  label: 'Công việc',
                   isSelected: currentIndex == 0,
                   onTap: () => onTap(0),
                 ),
                 _NavBarItem(
                   icon: Icons.home,
-                  label: 'Home',
+                  label: 'Trang chủ',
                   isSelected: currentIndex == 1,
                   onTap: () => onTap(1),
                 ),
                 const SizedBox(width: 64), // chừa chỗ cho nút +
                 _NavBarItem(
                   icon: Icons.groups,
-                  label: 'Team',
+                  label: 'Nhóm',
                   isSelected: currentIndex == 2,
                   onTap: () => onTap(2),
                 ),
                 _NavBarItem(
                   icon: Icons.account_circle_outlined,
-                  label: 'Account',
+                  label: 'Tài khoản',
                   isSelected: currentIndex == 3,
                   onTap: () => onTap(3),
                 ),

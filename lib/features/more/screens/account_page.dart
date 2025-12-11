@@ -165,7 +165,7 @@ class _AccountPageState extends State<AccountPage> {
                       controller: controller,
                       obscureText: obscure,
                       decoration: InputDecoration(
-                        labelText: "Pass cũ",
+                        labelText: "Mật khẩu cũ",
                         border: InputBorder.none,
                         suffixIcon: IconButton(
                           icon: Icon(

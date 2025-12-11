@@ -30,7 +30,7 @@ class _GroupListPageState extends State<GroupListPage> {
   bool _isPrivate = false;
   int _memberLimit = 5;
   String _goal = '';
-  String _joinAuth = 'Anyone can join';
+  String _joinAuth = 'Bất kỳ ai có thể tham gia';
 
   bool _isSubmitting = false;
 
@@ -123,7 +123,7 @@ class _GroupListPageState extends State<GroupListPage> {
                       ElevatedButton.icon(
                         onPressed: () => _showJoinByCodeDialog(context),
                         icon: const Icon(Icons.group_add_outlined, size: 18),
-                        label: const Text('Join bằng mã'),
+                        label: const Text('Tham gia bằng mã'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF39B6F6),
                           shape: RoundedRectangleBorder(
@@ -187,7 +187,7 @@ class _GroupListPageState extends State<GroupListPage> {
               Text('Tên nhóm: $groupName'),
               const SizedBox(height: 8),
               const Text(
-                'Group ID (mã nhóm):',
+                'Mã Nhóm (ID):',
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 6),
@@ -215,7 +215,7 @@ class _GroupListPageState extends State<GroupListPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Gửi mã này cho người khác để họ nhập join vào nhóm.',
+                'Gửi mã này cho người khác để họ nhập tham gia vào nhóm.',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
             ],
@@ -252,7 +252,7 @@ class _GroupListPageState extends State<GroupListPage> {
     _isPrivate = false;
     _memberLimit = 5;
     _goal = '';
-    _joinAuth = 'Anyone can join';
+    _joinAuth = 'Bất kỳ ai có thể tham gia';
     setState(() => _isSubmitting = false);
 
     await showModalBottomSheet(
@@ -295,7 +295,7 @@ class _GroupListPageState extends State<GroupListPage> {
                         right: 16,
                         child: Center(
                           child: Text(
-                            'New Study Group',
+                            'Nhóm Học Tập Mới',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -332,14 +332,14 @@ class _GroupListPageState extends State<GroupListPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Group name*',
+                              'Tên nhóm*',
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 6),
                             TextField(
                               controller: _nameCtl,
                               decoration: InputDecoration(
-                                hintText: 'Group name',
+                                hintText: 'Tên nhóm',
                                 filled: true,
                                 fillColor: Colors.grey.shade100,
                                 contentPadding: const EdgeInsets.symmetric(
@@ -361,14 +361,14 @@ class _GroupListPageState extends State<GroupListPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: const [
                                     Text(
-                                      'Private Group',
+                                      'Nhóm Riêng Tư',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                     SizedBox(height: 4),
                                     Text(
-                                      'Members can join only by group code',
+                                      'Chỉ những thành viên có mã nhóm mới có thể tham gia',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.black54,
@@ -388,7 +388,7 @@ class _GroupListPageState extends State<GroupListPage> {
                             const SizedBox(height: 18),
 
                             const Text(
-                              'Goal of Study Group*',
+                              'Mục đích của Nhóm Học Tập*',
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 6),
@@ -454,7 +454,7 @@ class _GroupListPageState extends State<GroupListPage> {
                             const SizedBox(height: 18),
 
                             const Text(
-                              'Limit of Number of Members',
+                              'Giới hạn số lượng thành viên',
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 6),
@@ -542,25 +542,26 @@ class _GroupListPageState extends State<GroupListPage> {
                                           children: [
                                             ListTile(
                                               title: const Text(
-                                                'Anyone can join',
+                                                'Bất kỳ ai có thể tham gia',
                                               ),
-                                              onTap: () => Navigator.of(
-                                                optCtx,
-                                              ).pop('Anyone can join'),
+                                              onTap: () =>
+                                                  Navigator.of(optCtx).pop(
+                                                    'Bất kỳ ai có thể tham gia',
+                                                  ),
                                             ),
                                             ListTile(
                                               title: const Text(
-                                                'Require approval',
+                                                'Yêu cầu phê duyệt',
                                               ),
                                               onTap: () => Navigator.of(
                                                 optCtx,
-                                              ).pop('Require approval'),
+                                              ).pop('Yêu cầu phê duyệt'),
                                             ),
                                             ListTile(
-                                              title: const Text('Only invite'),
+                                              title: const Text('Chỉ mời'),
                                               onTap: () => Navigator.of(
                                                 optCtx,
-                                              ).pop('Only invite'),
+                                              ).pop('Chỉ mời'),
                                             ),
                                           ],
                                         );
