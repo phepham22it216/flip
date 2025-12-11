@@ -1,4 +1,4 @@
-// lib/features/team/screens/task_status_page.dart
+﻿// lib/features/team/screens/task_status_page.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -40,11 +40,11 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
       _loading = true;
     });
     try {
-      // load group to check leader
+      // tải nhóm để kiểm tra leader
       final group = await _service.fetchGroup(widget.groupId);
       _isLeader = group?.leaderUid == _currentUid;
 
-      // load members status via helper in service (returns done/notDone lists)
+      // tải trạng thái thành viên (trả về danh sách done/notDone)
       final status = await _service.getTaskMemberStatus(
         widget.groupId,
         widget.taskId,
@@ -52,7 +52,7 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
       final d = status['done'] ?? <MemberModel>[];
       final n = status['notDone'] ?? <MemberModel>[];
 
-      // ensure current user appears in one of lists
+      // đảm bảo người dùng hiện tại xuất hiện trong một danh sách
       setState(() {
         done = List<MemberModel>.from(d);
         notDone = List<MemberModel>.from(n);
@@ -92,10 +92,10 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
     try {
       final isSelf = m.uid == _currentUid;
       if (isSelf) {
-        // toggle own
+        // chuyển đổi của chính mình
         await _service.toggleOwnDone(widget.groupId, widget.taskId, targetDone);
       } else {
-        // only leader can toggle others
+        // chỉ leader mới có thể chuyển đổi thành viên khác
         if (!_isLeader) {
           throw Exception(
             'Chỉ leader mới có quyền thay đổi trạng thái thành viên khác',
@@ -161,7 +161,7 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
             ),
       onTap: canToggle
           ? () {
-              // tap toggles if allowed
+              // nhấn để chuyển đổi nếu được phép
               _toggleMember(m, !isDone);
             }
           : null,
@@ -173,10 +173,12 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
     List<MemberModel> list, {
     required Color accent,
   }) {
+    final isNotDone = title == 'Chưa Hoàn Thành';
+    
     return Expanded(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 6),
-        padding: const EdgeInsets.only(top: 12, left: 8, right: 8, bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -186,47 +188,60 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
         ),
         child: Column(
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: accent.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      color: accent,
-                      fontWeight: FontWeight.w700,
+            // Header với tiêu đề và số lượng
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: accent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        color: accent,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                CircleAvatar(
-                  radius: 12,
-                  backgroundColor: accent,
-                  child: Text(
-                    list.length.toString(),
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: accent,
+                    child: Text(
+                      list.length.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                ),
-                const Spacer(),
-                if (title == 'Member not done' && _isLeader)
-                  TextButton.icon(
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 10),
+            
+            // Nút "Đánh dấu tất cả" (chỉ cho leader ở cột "Chưa Hoàn Thành")
+            if (isNotDone && _isLeader)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
                     onPressed: list.isEmpty
                         ? null
                         : () async {
-                            // leader mark all done
                             final confirm = await showDialog<bool>(
                               context: context,
                               builder: (dCtx) => AlertDialog(
                                 title: const Text('Xác nhận'),
                                 content: Text(
-                                  'Leader sẽ đánh dấu ${list.length} thành viên là đã xong. Tiếp tục?',
+                                  'Đánh dấu ${list.length} thành viên là đã hoàn thành?',
                                 ),
                                 actions: [
                                   TextButton(
@@ -235,7 +250,7 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
                                   ),
                                   TextButton(
                                     onPressed: () => Navigator.pop(dCtx, true),
-                                    child: const Text('OK'),
+                                    child: const Text('Xác nhận'),
                                   ),
                                 ],
                               ),
@@ -262,20 +277,26 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
                               }
                             }
                           },
-                    icon: const Icon(Icons.done_all, size: 18),
-                    label: const Text('Mark all'),
+                    icon: const Icon(Icons.done_all, size: 16),
+                    label: const Text('Đánh dấu tất cả'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accent,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
                   ),
-              ],
-            ),
-            const SizedBox(height: 8),
+                ),
+              ),
+            
+            // Danh sách thành viên
             if (list.isEmpty)
               Expanded(
                 child: Center(
                   child: Text(
-                    title == 'Member done'
-                        ? 'Chưa ai hoàn thành'
-                        : 'Không có thành viên cần hoàn thành',
-                    style: TextStyle(color: Colors.grey.shade500),
+                    isNotDone ? 'Tất cả đã hoàn thành' : 'Chưa ai hoàn thành',
+                    style: TextStyle(
+                      color: Colors.grey.shade500,
+                      fontSize: 14,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -283,12 +304,15 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
             else
               Expanded(
                 child: ListView.separated(
-                  padding: const EdgeInsets.only(top: 6),
+                  padding: const EdgeInsets.only(top: 4),
                   itemCount: list.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, __) => Divider(
+                    height: 1,
+                    color: Colors.grey.shade200,
+                  ),
                   itemBuilder: (context, idx) {
                     final m = list[idx];
-                    return _buildMemberTile(m, title == 'Member done');
+                    return _buildMemberTile(m, !isNotDone);
                   },
                 ),
               ),
@@ -323,15 +347,15 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
                         kToolbarHeight -
                         48,
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _buildColumn(
-                          'Member done',
+                          'Đã Hoàn Thành',
                           done,
                           accent: AppColors.success,
                         ),
                         _buildColumn(
-                          'Member not done',
+                          'Chưa Hoàn Thành',
                           notDone,
                           accent: AppColors.xanh1,
                         ),
@@ -341,7 +365,7 @@ class _TaskStatusPageState extends State<TaskStatusPage> {
                 ),
               ),
 
-            // saving overlay
+            // lớp phủ khi đang lưu
             if (_saving)
               Positioned.fill(
                 child: Container(
