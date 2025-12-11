@@ -22,6 +22,9 @@ class TaskModel {
   final String? matrixQuadrant; // DO_FIRST, SCHEDULE, DELEGATE, ELIMINATE
   final bool activity; // true: active, false: deleted
 
+  // NEW: map of memberUid -> true (or any truthy value)
+  final Map<String, dynamic> membersDone;
+
   TaskModel({
     required this.id,
     required this.title,
@@ -41,6 +44,7 @@ class TaskModel {
     this.pinned = TaskConstants.defaultPinned,
     this.matrixQuadrant,
     this.activity = true,
+    this.membersDone = const {},
   });
 
   TaskModel copyWith({
@@ -62,6 +66,7 @@ class TaskModel {
     bool? pinned,
     String? matrixQuadrant,
     bool? activity,
+    Map<String, dynamic>? membersDone,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -82,6 +87,7 @@ class TaskModel {
       pinned: pinned ?? this.pinned,
       matrixQuadrant: matrixQuadrant ?? this.matrixQuadrant,
       activity: activity ?? this.activity,
+      membersDone: membersDone ?? this.membersDone,
     );
   }
 
@@ -109,8 +115,11 @@ class TaskModel {
       'repeatEndDate': repeatEndDate?.millisecondsSinceEpoch,
       'pinned': pinned,
       'activity': activity,
-      'createdAt': DateTime.now(),
-      'updatedAt': DateTime.now(),
+      // NEW membersDone map (empty map if none)
+      'membersDone': membersDone,
+      // createdAt/updatedAt as ISO string to avoid storing DateTime object
+      'createdAt': DateTime.now().toIso8601String(),
+      'updatedAt': DateTime.now().toIso8601String(),
     };
   }
 
@@ -175,6 +184,17 @@ class TaskModel {
       if (value is double) {
         return DateTime.fromMillisecondsSinceEpoch(value.toInt());
       }
+      if (value is String) {
+        // Try parsing ISO string first
+        try {
+          return DateTime.parse(value);
+        } catch (_) {
+          // fallback: try parse as int string
+          final intVal = int.tryParse(value);
+          if (intVal != null)
+            return DateTime.fromMillisecondsSinceEpoch(intVal);
+        }
+      }
       return DateTime.now();
     }
 
@@ -189,6 +209,26 @@ class TaskModel {
         : <String>[];
 
     final repeatEndMs = data['repeatEndDate'];
+
+    // membersDone: safe parse to Map<String, dynamic>
+    Map<String, dynamic> parseMembersDone(dynamic raw) {
+      if (raw == null) return {};
+      if (raw is Map) {
+        try {
+          return Map<String, dynamic>.from(
+            raw.map((k, v) => MapEntry(k.toString(), v)),
+          );
+        } catch (_) {
+          // fallback: convert entries manually
+          final out = <String, dynamic>{};
+          raw.forEach((k, v) => out[k.toString()] = v);
+          return out;
+        }
+      }
+      return {};
+    }
+
+    final membersDone = parseMembersDone(data['membersDone']);
 
     // Get colorName from data, fallback to matrixQuadrant
     final colorNameStr = (data['colorName'] as String?) ?? 'xanh1';
@@ -216,6 +256,7 @@ class TaskModel {
       matrixQuadrant:
           (data['matrixQuadrant'] as String?) ?? TaskConstants.defaultQuadrant,
       activity: (data['activity'] as bool?) ?? true,
+      membersDone: membersDone,
     );
   }
 

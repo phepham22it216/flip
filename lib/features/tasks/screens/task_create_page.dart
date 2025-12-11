@@ -373,6 +373,17 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
   }
 
   Future<void> _saveTask() async {
+    // 1) Force commit composing text (IME) by unfocusing.
+    FocusScope.of(context).unfocus();
+
+    // 2) Debug info: check controller instance and current text
+    debugPrint(
+      'DEBUG: _titleController.hashCode = ${_titleController.hashCode}',
+    );
+    debugPrint('DEBUG: _noteController.hashCode = ${_noteController.hashCode}');
+    debugPrint('DEBUG: title text = "${_titleController.text}"');
+    debugPrint('DEBUG: note text = "${_noteController.text}"');
+
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng nhập tiêu đề task')),
@@ -411,15 +422,18 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
         pinned: _pinned,
       );
 
+      // show loading
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => const Center(child: CircularProgressIndicator()),
       );
 
+      // attempt save
       await _taskService.addTask(task);
 
-      if (mounted) {
+      // close loading if still mounted and a dialog exists
+      if (mounted && Navigator.canPop(context)) {
         Navigator.pop(context); // đóng loading
       }
 
@@ -429,9 +443,17 @@ class _TaskCreatePageState extends State<TaskCreatePage> {
         ).showSnackBar(const SnackBar(content: Text('Lưu task thành công')));
         Navigator.of(context).pop(); // quay lại list
       }
-    } catch (e) {
+    } catch (e, st) {
+      // Close loading if open
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
+      // Log full error
+      debugPrint('DB save error: $e');
+      debugPrint('$st');
+
       if (mounted) {
-        Navigator.pop(context); // đóng loading nếu đang mở
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));

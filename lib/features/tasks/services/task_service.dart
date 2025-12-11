@@ -55,6 +55,7 @@ class TaskService {
   }
 
   /// Thêm task mới
+  /// Thêm task mới
   Future<void> addTask(TaskModel task, {String? groupId}) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -64,15 +65,20 @@ class TaskService {
     final newRef = _tasksRef.push();
     final data = task.toMap();
 
+    // đảm bảo có cả creatorId và userId (phù hợp với các rule khác nhau)
     data['creatorId'] = user.uid;
+    data['userId'] = user.uid; // <-- quan trọng để pass rule auth check
+
     // Khi tạo mới, luôn set matrixQuadrant là ELIMINATE (không khẩn cấp, không quan trọng)
     data['matrixQuadrant'] = TaskConstants.defaultQuadrant;
     if (groupId != null) {
       data['groupId'] = groupId;
       data['type'] = TaskConstants.typeGroup;
     }
-    data['createdAt'] = DateTime.now();
-    data['updatedAt'] = DateTime.now();
+
+    // Dùng ServerValue.timestamp để server set thời gian chính xác
+    data['createdAt'] = ServerValue.timestamp;
+    data['updatedAt'] = ServerValue.timestamp;
 
     await newRef.set(data);
   }

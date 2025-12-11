@@ -1,3 +1,4 @@
+import 'package:flip/features/tasks/screens/group_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flip/theme/app_colors.dart';
 import 'package:flip/core/widgets/bottom_nav_bar.dart';
@@ -20,9 +21,7 @@ void main() async {
   // Khởi tạo GoogleSignIn
   initGoogleSignIn(); // gọi từ auth_service.dart
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeDateFormatting('vi_VN', null);
 
   runApp(const MyApp());
@@ -64,7 +63,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = const [
     TaskListPage(),
     HomePage(),
-    TeamPage(),
+    GroupListPage(),
     MorePage(),
   ];
 
