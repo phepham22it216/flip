@@ -83,7 +83,6 @@ class _MainScreenState extends State<MainScreen> {
     TaskListPage(),
     HomePage(),
     GroupListPage(),
-    TeamPage(),
     AccountPage(),
   ];
 
