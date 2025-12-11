@@ -1,4 +1,4 @@
-// lib/features/tasks/screens/group_list_page.dart
+﻿// lib/features/tasks/screens/group_list_page.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flip/theme/app_colors.dart';
@@ -8,7 +8,7 @@ import '../../more/models/group_model.dart';
 import '../services/group_service.dart';
 import 'group_detail_page.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:share_plus/share_plus.dart'; 
 
 class GroupListPage extends StatefulWidget {
   const GroupListPage({super.key});
@@ -84,7 +84,7 @@ class _GroupListPageState extends State<GroupListPage> {
                     child: ElevatedButton.icon(
                       onPressed: () => _showJoinByCodeDialog(context),
                       icon: const Icon(Icons.group_add_outlined, size: 18),
-                      label: const Text('Join bằng mã'),
+                      label: const Text('Tham gia bằng mã'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF39B6F6),
                         shape: RoundedRectangleBorder(
@@ -402,7 +402,7 @@ class _GroupListPageState extends State<GroupListPage> {
                                     );
                                     return AlertDialog(
                                       title: const Text(
-                                        'Chọn / Nhập goal (không dấu cách)',
+                                        'Chọn / Nhập mục đích (không dấu cách)',
                                       ),
                                       content: TextField(
                                         controller: tmpCtl,
@@ -626,7 +626,7 @@ class _GroupListPageState extends State<GroupListPage> {
                             ),
                           ),
                           child: const Text(
-                            'Cancel',
+                            'Hủy',
                             style: TextStyle(color: Colors.black87),
                           ),
                         ),
@@ -654,7 +654,7 @@ class _GroupListPageState extends State<GroupListPage> {
                                   ),
                                 )
                               : const Text(
-                                  'Save',
+                                  'Lưu',
                                   style: TextStyle(color: Colors.white),
                                 ),
                         ),
@@ -760,7 +760,7 @@ class _GroupListPageState extends State<GroupListPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            g.name.isNotEmpty ? g.name : 'Untitled group',
+                            g.name.isNotEmpty ? g.name : 'Chưa đặt tên',
                             style: const TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
@@ -769,7 +769,7 @@ class _GroupListPageState extends State<GroupListPage> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Leader: ${g.leaderUid} • $summary',
+                            'Leader: ${g.leaderUid}  $summary',
                             style: const TextStyle(
                               fontSize: 13,
                               color: Colors.black54,
@@ -801,7 +801,7 @@ class _GroupListPageState extends State<GroupListPage> {
                         Row(
                           children: [
                             IconButton(
-                              tooltip: 'Share mã nhóm',
+                              tooltip: 'Chia sẻ mã nhóm',
                               onPressed: () => _shareGroup(g),
                               icon: const Icon(
                                 Icons.share,
@@ -867,7 +867,7 @@ class _GroupListPageState extends State<GroupListPage> {
                     text: 'Sửa',
                     onTap: () {
                       Navigator.pop(ctx);
-                      // TODO: edit
+                      // TODO: chỉnh sửa nhóm
                     },
                   ),
                   const Divider(height: 1),
@@ -989,7 +989,7 @@ class _GroupListPageState extends State<GroupListPage> {
           title: const Text('Nhập mã nhóm'),
           content: TextField(
             controller: codeCtl,
-            decoration: const InputDecoration(hintText: 'Nhập group ID'),
+            decoration: const InputDecoration(hintText: 'Nhập mã nhóm'),
           ),
           actions: [
             TextButton(
