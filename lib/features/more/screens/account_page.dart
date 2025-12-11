@@ -87,9 +87,9 @@ class _AccountPageState extends State<AccountPage> {
           avatarUrl = uploadedUrl; // fixed null-safe
           if (!kIsWeb) _localImage = File(pickedFile.path);
         });
-        showMsg("Avatar updated!");
+        showMsg("Đã cập nhật avatar!");
       } else {
-        showMsg("Failed to upload avatar!");
+        showMsg("Cập nhật không thành công!");
       }
     } catch (e) {
       showMsg("Failed to update avatar: $e");
@@ -99,12 +99,12 @@ class _AccountPageState extends State<AccountPage> {
   void _saveName() async {
     final name = nameController.text.trim();
     if (name.isEmpty) {
-      showMsg("Full Name cannot be empty!");
+      showMsg("Vui lòng điền họ tên!");
       return;
     }
     try {
       await AuthService().updateFullName(name);
-      showMsg("Full Name updated!");
+      showMsg("Cập nhật thành công!");
       setState(() {
         isEditingName = false;
       });
@@ -143,7 +143,7 @@ class _AccountPageState extends State<AccountPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    "Enter your Password",
+                    "Nhập mât khẩu ở đây",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -165,7 +165,7 @@ class _AccountPageState extends State<AccountPage> {
                       controller: controller,
                       obscureText: obscure,
                       decoration: InputDecoration(
-                        labelText: "Current password",
+                        labelText: "Pass cũ",
                         border: InputBorder.none,
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -190,7 +190,7 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                         onPressed: () => Navigator.pop(context, null),
                         child: const Text(
-                          "Cancel",
+                          "Hủy",
                           style: TextStyle(color: Colors.black),
                         ),
                       ),
@@ -204,7 +204,7 @@ class _AccountPageState extends State<AccountPage> {
                         onPressed: () =>
                             Navigator.pop(context, controller.text.trim()),
                         child: const Text(
-                          "Confirm",
+                          "Xác nhận",
                           style: TextStyle(color: Colors.black),
                         ),
                       ),
@@ -224,17 +224,17 @@ class _AccountPageState extends State<AccountPage> {
     final user = await AuthService().currentUser();
 
     if (newEmail.isEmpty) {
-      showMsg("Email cannot be empty!");
+      showMsg("Vui lòng nhập email!");
       return;
     }
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(newEmail)) {
-      showMsg("Email is invalid!");
+      showMsg("Sai định dạng!");
       return;
     }
 
     if (user == null) {
-      showMsg("User not found!");
+      showMsg("Tài khoản không tồn tại!");
       return;
     }
 
@@ -250,13 +250,13 @@ class _AccountPageState extends State<AccountPage> {
       );
 
       if (result == "VERIFY_EMAIL_SENT") {
-        showMsg("A verification email has been sent to $newEmail. Please confirm!");
+        showMsg("Link xác thực đã được gửi đến $newEmail. Hãy xác nhận!");
         setState(() {
           isEditingEmail = false;
           emailController.text = maskEmail(newEmail);
         });
       } else {
-        showMsg("Failed to update email!");
+        showMsg("Cập nhật không thành công!");
       }
     } catch (e) {
       showMsg(e.toString());
@@ -287,7 +287,7 @@ class _AccountPageState extends State<AccountPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  "Change Password",
+                  "Sửa Mật Khẩu",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -309,7 +309,7 @@ class _AccountPageState extends State<AccountPage> {
                     controller: oldPassController,
                     obscureText: obscureOld,
                     decoration: InputDecoration(
-                      labelText: "Old Password",
+                      labelText: "Mật khẩu cũ",
                       border: InputBorder.none,
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -333,7 +333,7 @@ class _AccountPageState extends State<AccountPage> {
                     controller: newPassController,
                     obscureText: obscureNew,
                     decoration: InputDecoration(
-                      labelText: "New Password",
+                      labelText: "Mật khẩu mới",
                       border: InputBorder.none,
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -357,7 +357,7 @@ class _AccountPageState extends State<AccountPage> {
                     controller: rePassController,
                     obscureText: obscureRe,
                     decoration: InputDecoration(
-                      labelText: "Confirm New Password",
+                      labelText: "Nhập lại MK mới",
                       border: InputBorder.none,
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -380,7 +380,7 @@ class _AccountPageState extends State<AccountPage> {
                       ),
                       onPressed: () => Navigator.pop(ctx),
                       child:
-                      const Text("Cancel", style: TextStyle(color: Colors.black)),
+                      const Text("Hủy", style: TextStyle(color: Colors.black)),
                     ),
                     const SizedBox(width: 10),
 
@@ -394,15 +394,15 @@ class _AccountPageState extends State<AccountPage> {
                         final rePass = rePassController.text.trim();
 
                         if (oldPass.isEmpty || newPass.isEmpty || rePass.isEmpty) {
-                          showMsg("Please fill in all fields!");
+                          showMsg("Hãy nhập đầy đủ các trường!");
                           return;
                         }
                         if (newPass.length < 6) {
-                          showMsg("New password must be at least 6 characters!");
+                          showMsg("Mật khẩu không được nhỏ hơn 6 kí tự.");
                           return;
                         }
                         if (newPass != rePass) {
-                          showMsg("Passwords do not match!");
+                          showMsg("Bạn nhập chưa khớp mật khẩu.");
                           return;
                         }
 
@@ -415,7 +415,7 @@ class _AccountPageState extends State<AccountPage> {
                         }
                       },
                       child:
-                      const Text("Save", style: TextStyle(color: Colors.black)),
+                      const Text("Lưu", style: TextStyle(color: Colors.black)),
                     ),
                   ],
                 )
@@ -431,12 +431,12 @@ class _AccountPageState extends State<AccountPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Logout"),
-        content: const Text("Are you sure you want to logout?"),
+        title: const Text("Đăng Xuất"),
+        content: const Text("Bạn muốn đăng xuất?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
+            child: const Text("Hủy"),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -447,7 +447,7 @@ class _AccountPageState extends State<AccountPage> {
                     (route) => false,
               );
             },
-            child: const Text("Logout"),
+            child: const Text("OK"),
           ),
         ],
       ),
@@ -491,7 +491,7 @@ class _AccountPageState extends State<AccountPage> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        "Tap avatar to change",
+                        "Nhấp vào avatar để thay đổi!",
                         style: TextStyle(color: Colors.black54, fontSize: 12),
                       ),
 
@@ -520,7 +520,7 @@ class _AccountPageState extends State<AccountPage> {
               child: Column(
                 children: [
                   _infoCard(
-                    title: "Full Name",
+                    title: "Họ và tên",
                     icon: Icons.person,
                     iconColor: Colors.blue.shade700,
                     controller: nameController,
@@ -539,7 +539,7 @@ class _AccountPageState extends State<AccountPage> {
                     isEditing: isEditingEmail,
                     onTapEdit: () {
                       if (hash.isEmpty) {
-                        showMsg("Google accounts cannot change email!");
+                        showMsg("Tài khoản GG không thể sửa email!");
                         return;
                       }
                       AuthService().currentUser().then((user) {
@@ -557,7 +557,7 @@ class _AccountPageState extends State<AccountPage> {
                   const SizedBox(height: 15),
 
                   _infoCard(
-                    title: "Password",
+                    title: "Mật khẩu",
                     icon: Icons.lock,
                     iconColor: Colors.black87,
                     controller: TextEditingController(text: passwordMasked),
@@ -568,7 +568,7 @@ class _AccountPageState extends State<AccountPage> {
 
                       // nếu hash rỗng → không có password
                       if (hash.isEmpty || hash.trim().isEmpty) {
-                        showMsg("Your account does not have a password. Cannot change password!");
+                        showMsg("Tài khoản của bạn là tài khoản GG, không thể thay đổi MK!");
                         return;
                       }
 
@@ -612,7 +612,7 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 ),
                 child: const Text(
-                  "Logout",
+                  "Đăng xuất",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

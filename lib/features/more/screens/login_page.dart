@@ -65,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Title
                   Text(
-                    " ~ Login ~",
+                      " ~ Đăng Nhập ~",
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextField(
                           controller: emailController,
                           decoration: InputDecoration(
-                            labelText: "Enter your email",
+                            labelText: "Nhập email của bạn",
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -102,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: passController,
                           obscureText: _obscurePassword,
                           decoration: InputDecoration(
-                            labelText: "Enter your password",
+                            labelText: "Nhập mật khẩu của bạn",
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -142,16 +142,16 @@ class _LoginScreenState extends State<LoginScreen> {
                               final pass  = passController.text.trim();
 
                               if (email.isEmpty || pass.isEmpty) {
-                                showMsg(context, "Please fill in all fields!");
+                                showMsg(context, "Hãy nhập đầy đủ thông tin!");
                                 return;
                               }
                               final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
                               if (!emailRegex.hasMatch(email)) {
-                                showMsg(context, "Please enter a valid email!");
+                                showMsg(context, "Sai định dạng email");
                                 return;
                               }
                               if (pass.length < 6) {
-                                showMsg(context, "Password must be at least 6 characters!");
+                                showMsg(context, "Mật khẩu không được ít hơn 6 kí tự!");
                                 return;
                               }
 
@@ -162,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 );
 
                                 if (user == null) {
-                                  showMsg(context, "Login failed. Please check your credentials.");
+                                  showMsg(context, "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin của bạn!");
                                   return; // Không chuyển hướng
                                 }
 
@@ -193,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             child: Text(
-                              "Login with Account",
+                              "Đăng nhập với Tài Khoản",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -205,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 20),
 
-                        const Text("Or continue with"),
+                        const Text("Hoặc tiếp tục với"),
                         const SizedBox(height: 12),
 
                         // Google button
@@ -215,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: OutlinedButton.icon(
                             icon: Image.asset("assets/icons/google.png", height: 22),
                             label: const Text(
-                                "Sign in with Google",
+                                "Đăng nhập với Google",
                                 style: TextStyle(
                                   fontSize: 18,
                                 ),
@@ -226,7 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 if (user == null) {
                                   // Đăng nhập thất bại
-                                  showMsg(context, "Google Sign-In failed. Please try again.");
+                                  showMsg(context, "Đăng nhập bằng google thất bại! Vui lòng thử lại!");
                                   return; // Không chuyển hướng
                                 }
 
@@ -261,7 +261,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        "Don't have an account? ",
+                        "Bạn chưa có tài khoản? ",
                         style: TextStyle(color: Colors.white),
                       ),
                       GestureDetector(
@@ -272,7 +272,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           );
                         },
                         child: const Text(
-                          "Sign Up",
+                          "Đăng Ký",
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             // fontStyle: FontStyle.italic,
