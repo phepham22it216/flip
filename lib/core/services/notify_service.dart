@@ -66,8 +66,8 @@ class NotifyService {
   // AUTO REFRESH MỖI 1 PHÚT
   // ---------------------------------------------------------------------------
   void _startAutoRefresh() {
-    // ❗ COMMENT CẢ KHỐI NÀY = TẮT TỰ ĐỘNG TẢI THÔNG BÁO
-    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
+    // ❗ COMMENT CẢ KHỐI NÀY = TẮT TỰ ĐỘNG TẢI THÔNG BÁO Duration(seconds: 30) or Duration(minutes: 1)
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
       await refreshNotifications();
     });
 
@@ -103,7 +103,11 @@ class NotifyService {
 
     final allTasks = await _taskService.getTasksByUserId(user.uid).first;
     final now = DateTime.now();
+    print("📌 Tổng task: ${allTasks.length}");
 
+    // ---------------------------
+    // 1️⃣ Lọc task theo reminder
+    // ---------------------------
     final filtered = allTasks.where((task) {
       return task.status == "inProgress" &&
           task.reminderEnabled == true &&
@@ -112,8 +116,72 @@ class NotifyService {
           task.reminders.any((r) => validReminders.contains(r));
     }).toList();
 
-    return filtered;
+    print("📌 Task đủ điều kiện reminder: ${filtered.length}");
+    if (filtered.isEmpty) return [];
+
+    // ---------------------------
+    // 2️⃣ Lấy notify đã đọc hôm nay
+    // ---------------------------
+    final notifSnapshot = await _notifRef
+        .orderByChild("userId")
+        .equalTo(user.uid)
+        .get();
+
+    print("📥 Snapshot notify: ${notifSnapshot.value.runtimeType}");
+
+    List<String> readTaskIdsToday = [];
+
+    if (notifSnapshot.value != null && notifSnapshot.value is Map) {
+      final Map data = notifSnapshot.value as Map;
+      print("📥 Tổng notify: ${data.length}");
+
+      for (var entry in data.entries) {
+        final raw = entry.value;
+
+        // Sai kiểu -> bỏ qua
+        if (raw is! Map) continue;
+
+        final value = Map<String, dynamic>.from(raw);
+
+        final bool isRead = value["isRead"] == true;
+        final String? taskId = value["taskId"];
+        final String? createdAtStr = value["createdAt"];
+
+        print("🔹 Notify check:");
+        print("   ➤ isRead = $isRead");
+        print("   ➤ taskId = $taskId");
+        print("   ➤ createdAt = $createdAtStr");
+
+        if (!isRead || taskId == null || createdAtStr == null) continue;
+
+        final DateTime createdAt =
+            DateTime.tryParse(createdAtStr) ?? now;
+
+        final bool isToday =
+            createdAt.year == now.year &&
+                createdAt.month == now.month &&
+                createdAt.day == now.day;
+
+        if (isToday) {
+          print("✅ Notify hôm nay: $taskId");
+          readTaskIdsToday.add(taskId);
+        }
+      }
+    }
+
+    print("📌 Tổng taskId cần loại bỏ: ${readTaskIdsToday.length}");
+
+    // ---------------------------
+    // 3️⃣ Loại task đã bị notify hôm nay + đã đọc
+    // ---------------------------
+    final result =
+    filtered.where((t) => !readTaskIdsToday.contains(t.id)).toList();
+
+    print("📌 Sau khi lọc notify: ${result.length} task còn lại");
+
+    return result;
   }
+
 
   // ---------------------------------------------------------------------------
   // TẠO THÔNG BÁO TỪ TASK + REMINDER
