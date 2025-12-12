@@ -102,11 +102,11 @@ class _TaskListPageState extends State<TaskListPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildViewButton('CARD', TaskViewType.list),
+            _buildViewButton('THẺ', TaskViewType.list),
             _buildDivider(),
             _buildViewButton('LỊCH', TaskViewType.calendar),
             _buildDivider(),
-            _buildViewButton('MATRIX', TaskViewType.matrix),
+            _buildViewButton('MA TRẬN', TaskViewType.matrix),
           ],
         ),
       ),

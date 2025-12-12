@@ -1,4 +1,4 @@
-// lib/features/tasks/screens/group_detail_page.dart
+﻿// lib/features/tasks/screens/group_detail_page.dart
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -12,7 +12,7 @@ import 'chat_page.dart';
 import 'task_create_page.dart';
 import 'group_task_create_page.dart';
 
-class GroupDetailPage extends StatefulWidget {
+class GroupDetailPage extends StatefulWidget { 
   final String groupId;
   const GroupDetailPage({required this.groupId, super.key});
   @override
@@ -120,7 +120,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                   children: [
                     const Expanded(
                       child: Text(
-                        'Tasks',
+                        'Nhiệm vụ',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -128,7 +128,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                       ),
                     ),
                     Text(
-                      '$membersCount members',
+                      '$membersCount thành viên',
                       style: TextStyle(color: Colors.grey.shade600),
                     ),
                   ],
@@ -436,7 +436,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
 
   Widget _buildLeadersNoteCard() {
     final note =
-        _group!.leaderNote ?? 'Write notes to inform all the members :)';
+        _group!.leaderNote ?? 'Viết ghi chú để thông báo cho toàn bộ thành viên :)';
     return InkWell(
       onTap: () {
         if (_isLeader) {
@@ -463,7 +463,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Leader's Note",
+                    "Ghi chú của Leader",
                     style: TextStyle(
                       color: Colors.white70,
                       fontWeight: FontWeight.w700,
@@ -503,7 +503,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 Text(
-                  'Mission Today',
+                  'Nhiệm vụ hôm nay',
                   style: TextStyle(
                     color: Colors.black87,
                     fontWeight: FontWeight.w700,
@@ -511,7 +511,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'Make a mission and challenge together!',
+                  'Tạo nhiệm vụ và thách thức cùng nhau!',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ],
@@ -538,7 +538,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 Text(
-                  'No new Quiz?',
+                  'Chưa có quiz mới?',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -546,7 +546,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'Make a quiz and let everyone play!',
+                  'Tạo quiz và cho mọi người chơi!',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -611,7 +611,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
               onPressed: () async {
                 if (!formKey.currentState!.validate()) return;
                 final newNote = controller.text.trim();
-                Navigator.of(ctx).pop(); // đóng dialog trước khi lưu
+                Navigator.of(ctx).pop(); // Đóng dialog trước khi lưu
                 final messenger = ScaffoldMessenger.of(context);
                 messenger.showSnackBar(
                   const SnackBar(content: Text('Đang lưu...')),
