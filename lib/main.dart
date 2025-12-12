@@ -18,18 +18,21 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flip/features/more/services/auth_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:flip/features/home/screens/ai_chat_page.dart'; // đảm bảo file này tồn tại
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Khởi tạo GoogleSignIn
-  initGoogleSignIn(); // gọi từ auth_service.dart
-
+  // 1 lần initializeApp duy nhất với options cho web/android/ios
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  tz.initializeTimeZones(); // <--- Quan trọng
+
+  // Sau khi Firebase init xong thì init các thứ khác
+  initGoogleSignIn(); // hàm trong auth_service.dart — gọi sau khi Firebase init
+
+  tz.initializeTimeZones();
   tz.setLocalLocation(tz.getLocation('Asia/Ho_Chi_Minh'));
 
   await flutterLocalNotificationsPlugin.initialize(
@@ -64,11 +67,39 @@ class MyApp extends StatelessWidget {
         ),
         fontFamily: 'Roboto',
       ),
-      home: LoginScreen(),
+      // Điều hướng dựa trên trạng thái auth (nếu đã login -> MainScreen, chưa -> LoginScreen)
+      home: const AuthGate(),
     );
   }
 }
 
+/// AuthGate chỉ nhận diện trạng thái đăng nhập
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        // đang load trạng thái auth
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        // nếu có user -> vào main
+        if (snapshot.hasData && snapshot.data != null) {
+          return const MainScreen();
+        }
+        // ngược lại show login
+        return const LoginScreen();
+      },
+    );
+  }
+}
+
+/// MainScreen chứa toàn bộ UI chính (pages, bottom nav, fab chat)
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -90,7 +121,52 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const MainHeader(), // 👈 header FLIP cố định
-      body: _pages[_currentIndex], // 👈 nội dung từng tab
+      // body = nội dung từng tab
+      body: _pages[_currentIndex],
+
+      // ---------- Floating chat button ----------
+      floatingActionButton: Container(
+        margin: const EdgeInsets.only(
+          bottom: 70,
+          right: 10,
+        ), // tránh che bottom nav
+        child: GestureDetector(
+          onTap: () {
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const AIChatPage()));
+          },
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFF4A90E2), // xanh nhạt
+                  Color(0xFF1976D2), // xanh đậm FLIP
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.chat_bubble_outline,
+              size: 28,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+
+      // ---------- Bottom bar (giữ logic onCenterTap) ----------
       bottomNavigationBar: BottomNavBar(
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -99,9 +175,14 @@ class _MainScreenState extends State<MainScreen> {
           });
         },
         onCenterTap: () {
+          // vẫn mở TaskCreate như trước; nếu muốn đổi thành Chat thì đổi dòng dưới
           Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => const TaskCreatePage()));
+
+          // Nếu bạn muốn center button mở Chat thay vì TaskCreate, comment 2 dòng trên
+          // và dùng:
+          // Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AIChatPage()));
         },
       ),
     );

@@ -49,9 +49,9 @@ class DefaultFirebaseOptions {
     messagingSenderId: '639479435926',
     projectId: 'flip-66d56',
     authDomain: 'flip-66d56.firebaseapp.com',
+    databaseURL: 'https://flip-66d56-default-rtdb.firebaseio.com',
     storageBucket: 'flip-66d56.firebasestorage.app',
     measurementId: 'G-3TTKT1D0Q9',
-    databaseURL: 'https://flip-66d56-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -59,8 +59,8 @@ class DefaultFirebaseOptions {
     appId: '1:639479435926:android:a3fa04adf461b570ec68b7',
     messagingSenderId: '639479435926',
     projectId: 'flip-66d56',
-    storageBucket: 'flip-66d56.firebasestorage.app',
     databaseURL: 'https://flip-66d56-default-rtdb.firebaseio.com',
+    storageBucket: 'flip-66d56.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -78,7 +78,9 @@ class DefaultFirebaseOptions {
     messagingSenderId: '639479435926',
     projectId: 'flip-66d56',
     authDomain: 'flip-66d56.firebaseapp.com',
+    databaseURL: 'https://flip-66d56-default-rtdb.firebaseio.com',
     storageBucket: 'flip-66d56.firebasestorage.app',
     measurementId: 'G-6N4RBRKGBT',
   );
+
 }

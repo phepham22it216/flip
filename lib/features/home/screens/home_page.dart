@@ -3,6 +3,8 @@ import '../widgets/status_chart.dart';
 import '../widgets/important_chart.dart';
 import '../widgets/rate_chart.dart';
 import '../widgets/avgtime_chart.dart';
+import '../widgets/ai_analysis_card.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -28,18 +30,10 @@ class _HomePageState extends State<HomePage> {
     if (picked != null) {
       setState(() {
         switch (chart) {
-          case 1:
-            isStart ? startDate1 = picked : endDate1 = picked;
-            break;
-          case 2:
-            isStart ? startDate2 = picked : endDate2 = picked;
-            break;
-          case 3:
-            isStart ? startDate3 = picked : endDate3 = picked;
-            break;
-          case 4:
-            isStart ? startDate4 = picked : endDate4 = picked;
-            break;
+          case 1: isStart ? startDate1 = picked : endDate1 = picked; break;
+          case 2: isStart ? startDate2 = picked : endDate2 = picked; break;
+          case 3: isStart ? startDate3 = picked : endDate3 = picked; break;
+          case 4: isStart ? startDate4 = picked : endDate4 = picked; break;
         }
       });
     }
@@ -47,48 +41,114 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+
     return Scaffold(
       backgroundColor: const Color(0xFFE3F2FD),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              StatusChart(startDate: startDate1, endDate: endDate1, onPickDate: pickDate),
-              const SizedBox(height: 10),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  bool isMobile = constraints.maxWidth < 700;
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 1050;
 
-                  return Wrap(
-                    spacing: 16,
-                    runSpacing: 16,
-                    children: [
-                      SizedBox(
-                        width: isMobile ? constraints.maxWidth : (constraints.maxWidth - 16) / 2,
-                        child: ImportantChart(
-                          startDate: startDate2,
-                          endDate: endDate2,
-                          onPickDate: pickDate,
+            // ================================
+            // LEFT COLUMN: CHARTS
+            // ================================
+            final chartsColumn = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                StatusChart(
+                  startDate: startDate1,
+                  endDate: endDate1,
+                  onPickDate: pickDate,
+                ),
+                const SizedBox(height: 10),
+
+                LayoutBuilder(
+                  builder: (context, inner) {
+                    final isMobile = inner.maxWidth < 700;
+                    final itemW = isMobile
+                        ? inner.maxWidth
+                        : (inner.maxWidth - 16) / 2;
+
+                    return Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      children: [
+                        SizedBox(
+                          width: itemW,
+                          child: ImportantChart(
+                            startDate: startDate2,
+                            endDate: endDate2,
+                            onPickDate: pickDate,
+                          ),
                         ),
-                      ),
-                      SizedBox(
-                        width: isMobile ? constraints.maxWidth : (constraints.maxWidth - 16) / 2,
-                        child: RateChart(
-                          startDate: startDate3,
-                          endDate: endDate3,
-                          onPickDate: pickDate,
+                        SizedBox(
+                          width: itemW,
+                          child: RateChart(
+                            startDate: startDate3,
+                            endDate: endDate3,
+                            onPickDate: pickDate,
+                          ),
                         ),
-                      ),
-                    ],
-                  );
-                },
+                      ],
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 10),
+
+                AvgTimeChart(
+                  startDate: startDate4,
+                  endDate: endDate4,
+                  onPickDate: pickDate,
+                ),
+              ],
+            );
+
+            // ================================
+            // RIGHT COLUMN: AI ANALYSIS
+            // ================================
+            final aiCard = ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 360,
               ),
-              const SizedBox(height: 10),
-              AvgTimeChart(startDate: startDate4, endDate: endDate4, onPickDate: pickDate),
-            ],
-          ),
+              child: AIAnalysisCard(userId: userId),
+            );
+
+            // ================================
+            // DESKTOP LAYOUT
+            // ================================
+            if (isWide) {
+              return Row(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: chartsColumn,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16, top: 16),
+                    child: aiCard,
+                  ),
+                ],
+              );
+            }
+
+            // ================================
+            // MOBILE LAYOUT
+            // ================================
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  aiCard, // AI card ở trên
+                  const SizedBox(height: 16),
+                  chartsColumn,
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
